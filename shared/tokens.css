@@ -1,0 +1,73 @@
+/* Heart Open — Design Tokens
+ * Source: heart-open-concepts/shared_assets.md §디자인시스템
+ * Target: 22~28세 여성, Pretendard, mobile-first ≤480px
+ */
+
+:root {
+  /* Brand */
+  --primary: #FF6F91;
+  --primary-light: #FFB3C6;
+  --primary-dark: #D94F78;
+  --accent: #C3B1E1;
+  --accent-surface: #F4EEFF;
+
+  /* Surfaces */
+  --bg: #FFF9F7;
+  --surface-warm: #FFF0EC;
+  --card: #FFFFFF;
+
+  /* Text */
+  --text-primary: #1A1A1A;
+  --text-secondary: #6B6B6B;
+
+  /* Status */
+  --success: #82C09A;
+
+  /* ESARP type colors */
+  --type-emotion: #FF6F91;
+  --type-social: #FFB347;
+  --type-attachment: #C3B1E1;
+  --type-romantic: #FF9EC4;
+  --type-practical: #82C09A;
+
+  /* Spacing scale */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+
+  /* Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-pill: 999px;
+
+  /* Shadow */
+  --shadow-sm: 0 1px 2px rgba(26, 26, 26, 0.06);
+  --shadow-md: 0 4px 12px rgba(217, 79, 120, 0.10);
+  --shadow-lg: 0 12px 32px rgba(217, 79, 120, 0.14);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+.container {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-5);
+  min-height: 100vh;
+}
+
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; cursor: pointer; border: none; background: none; }
+img { max-width: 100%; display: block; }
