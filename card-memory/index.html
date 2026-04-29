@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>카드 메모리 — Heart Open</title>
+  <meta name="description" content="3×3 카드 뒤집기 — 우리는 몇 초 커플?">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+  <link rel="stylesheet" href="../shared/tokens.css">
+  <link rel="stylesheet" href="../shared/result-card.css">
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-2NYTV5FKDC"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){ dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'G-2NYTV5FKDC');
+  </script>
+  <script src="../shared/analytics.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
+  <script src="../shared/result-card.js" defer></script>
+  <style>
+    .stage { padding-top: var(--space-6); text-align: center; }
+    h1 { font-size: 22px; font-weight: 700; }
+    .lead { color: var(--text-secondary); font-size: 14px; margin-top: var(--space-2); line-height: 1.6; }
+
+    .start, .cta-restart {
+      margin-top: var(--space-6); width: 100%;
+      background: var(--primary); color: #fff;
+      padding: 16px; font-size: 16px; font-weight: 700;
+      border-radius: var(--radius-pill); box-shadow: var(--shadow-md);
+    }
+
+    .timer-bar {
+      margin-top: var(--space-5);
+      font-size: 16px; font-weight: 700; color: var(--primary-dark);
+    }
+
+    .grid {
+      margin-top: var(--space-5);
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-3);
+    }
+    .card {
+      aspect-ratio: 1 / 1;
+      perspective: 600px;
+      cursor: pointer;
+    }
+    .card-inner {
+      position: relative; width: 100%; height: 100%;
+      transition: transform 0.4s;
+      transform-style: preserve-3d;
+    }
+    .card.flipped .card-inner { transform: rotateY(180deg); }
+    .card-front, .card-back {
+      position: absolute; inset: 0;
+      backface-visibility: hidden;
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm);
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+      background: var(--card);
+    }
+    .card-front {
+      background-image: url('../assets/cards/match.png');
+      background-size: cover; background-position: center;
+      background-color: var(--accent-surface);
+    }
+    .card-back {
+      transform: rotateY(180deg);
+      padding: 8px;
+    }
+    .card-back img { width: 80%; height: 80%; object-fit: contain; }
+    .card.matched .card-back {
+      box-shadow: 0 0 0 3px var(--success), 0 4px 12px rgba(130, 192, 154, 0.3);
+    }
+    .card.bonus .card-back { background: linear-gradient(135deg, var(--accent-surface), #fff); }
+
+    .heart-pop {
+      position: absolute; left: 50%; top: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 32px; pointer-events: none;
+      animation: heartUp 0.8s ease-out forwards;
+    }
+    @keyframes heartUp {
+      0%   { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+      60%  { transform: translate(-50%, -120%) scale(1.2); opacity: 1; }
+      100% { transform: translate(-50%, -180%) scale(1); opacity: 0; }
+    }
+
+    .hidden { display: none !important; }
+
+    @keyframes pop-in { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+    .pop-in { animation: pop-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <section id="screen-intro" class="stage">
+      <h1>🃏 카드 메모리</h1>
+      <p class="lead">3×3 카드 뒤집어서<br>ESARP 짝 맞춰봐. 몇 초 걸릴까?</p>
+      <button class="start" id="btn-start">시작하기</button>
+    </section>
+
+    <section id="screen-game" class="stage hidden">
+      <div class="timer-bar" id="timer-bar">⏱ 0.0초</div>
+      <div class="grid" id="grid"></div>
+    </section>
+
+    <section id="screen-result" class="stage hidden">
+      <div class="result-card pop-in" id="result-card">
+        <img id="result-img" src="" alt="">
+        <div class="result-title" id="result-title"></div>
+        <div class="result-desc" id="result-desc"></div>
+        <div class="result-actions">
+          <button class="btn-share" id="btn-share">공유</button>
+          <button class="btn-save" id="btn-save">저장</button>
+        </div>
+        <a class="btn-cta" id="btn-cta" href="https://heartopen.app">앱에서 더 자세히 분석 →</a>
+      </div>
+      <button class="cta-restart" id="btn-restart" style="background:transparent;color:var(--text-secondary);box-shadow:none;">다시 해보기</button>
+    </section>
+  </div>
+
+  <script>
+    const CONCEPT_ID = '02';
+    const CONCEPT_NAME = '카드 메모리';
+
+    const TYPES = {
+      E: 'emotion.png', S: 'social.png', A: 'attachment.png',
+      R: 'romantic.png', P: 'practical.png'
+    };
+
+    const $ = (id) => document.getElementById(id);
+    const showOnly = (id) => ['screen-intro','screen-game','screen-result'].forEach(s =>
+      $(s).classList.toggle('hidden', s !== id));
+
+    function shuffle(arr) {
+      const a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    let cards = [];
+    let flipped = [];
+    let matched = new Set();
+    let lockBoard = false;
+    let startTime = 0;
+    let timerInterval = null;
+    let bonusFound = false;
+
+    $('btn-start').addEventListener('click', () => {
+      if (window.HeartOpenAnalytics) {
+        HeartOpenAnalytics.trackPageView(CONCEPT_ID, CONCEPT_NAME);
+        HeartOpenAnalytics.trackGameStart(CONCEPT_ID, CONCEPT_NAME);
+      }
+      startGame();
+    });
+
+    function startGame() {
+      cards = shuffle(['E','E','S','S','A','A','R','R','BONUS']);
+      flipped = [];
+      matched = new Set();
+      lockBoard = false;
+      bonusFound = false;
+      renderGrid();
+      showOnly('screen-game');
+      startTime = Date.now();
+      timerInterval = setInterval(() => {
+        const sec = ((Date.now() - startTime) / 1000).toFixed(1);
+        $('timer-bar').textContent = '⏱ ' + sec + '초';
+      }, 100);
+    }
+
+    function renderGrid() {
+      const grid = $('grid');
+      grid.innerHTML = '';
+      cards.forEach((type, idx) => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        if (type === 'BONUS') card.classList.add('bonus');
+        card.dataset.idx = idx;
+        const inner = document.createElement('div');
+        inner.className = 'card-inner';
+        const front = document.createElement('div');
+        front.className = 'card-front';
+        const back = document.createElement('div');
+        back.className = 'card-back';
+        if (type === 'BONUS') {
+          back.innerHTML = '<div style="font-size:32px;">💝</div>';
+        } else {
+          const img = document.createElement('img');
+          img.src = '../assets/characters/' + TYPES[type];
+          img.alt = type;
+          back.appendChild(img);
+        }
+        inner.appendChild(front);
+        inner.appendChild(back);
+        card.appendChild(inner);
+        card.addEventListener('click', () => onCardClick(card, idx, type));
+        grid.appendChild(card);
+      });
+    }
+
+    function onCardClick(card, idx, type) {
+      if (lockBoard) return;
+      if (card.classList.contains('flipped')) return;
+      if (matched.has(idx)) return;
+
+      card.classList.add('flipped');
+
+      if (type === 'BONUS') {
+        if (!bonusFound) {
+          bonusFound = true;
+          gtag('event', 'card_match', { concept_id: CONCEPT_ID, type: 'BONUS' });
+          spawnHeart(card);
+          card.classList.add('matched');
+          matched.add(idx);
+          checkComplete();
+        }
+        return;
+      }
+
+      flipped.push({ card, idx, type });
+      if (flipped.length === 2) {
+        lockBoard = true;
+        const [c1, c2] = flipped;
+        if (c1.type === c2.type) {
+          c1.card.classList.add('matched');
+          c2.card.classList.add('matched');
+          matched.add(c1.idx);
+          matched.add(c2.idx);
+          spawnHeart(c2.card);
+          gtag('event', 'card_match', { concept_id: CONCEPT_ID, type: c1.type });
+          flipped = [];
+          lockBoard = false;
+          checkComplete();
+        } else {
+          setTimeout(() => {
+            c1.card.classList.remove('flipped');
+            c2.card.classList.remove('flipped');
+            flipped = [];
+            lockBoard = false;
+          }, 800);
+        }
+      }
+    }
+
+    function spawnHeart(card) {
+      const h = document.createElement('div');
+      h.className = 'heart-pop';
+      h.textContent = '💕';
+      card.style.position = 'relative';
+      card.appendChild(h);
+      setTimeout(() => h.remove(), 800);
+    }
+
+    function checkComplete() {
+      if (matched.size >= 9) {
+        clearInterval(timerInterval);
+        const elapsed = Date.now() - startTime;
+        setTimeout(() => showResult(elapsed), 600);
+      }
+    }
+
+    function showResult(timeMs) {
+      let title, file;
+      if (timeMs < 15000) { title = '천재 커플'; file = 'emotion.png'; }
+      else if (timeMs < 30000) { title = '찰떡 커플'; file = 'attachment.png'; }
+      else { title = '여유로운 커플'; file = 'social.png'; }
+      const sec = (timeMs / 1000).toFixed(1);
+      $('result-img').src = '../assets/characters/' + file;
+      $('result-img').alt = title;
+      $('result-title').textContent = title + ' 💕';
+      $('result-desc').textContent = sec + '초만에 짝을 다 맞췄어! 남친이랑 같이 해봐.';
+      showOnly('screen-result');
+      if (window.HeartOpenAnalytics) HeartOpenAnalytics.trackResultView(CONCEPT_ID, title);
+    }
+
+    $('btn-share').addEventListener('click', () => {
+      HeartOpenResultCard.shareResult({
+        conceptId: CONCEPT_ID,
+        title: 'Heart Open 카드 메모리 — ' + $('result-title').textContent,
+        url: location.href
+      });
+    });
+    $('btn-save').addEventListener('click', () => HeartOpenResultCard.saveResult('#result-card'));
+    $('btn-cta').addEventListener('click', () => {
+      if (window.HeartOpenAnalytics) HeartOpenAnalytics.trackCtaClick(CONCEPT_ID, 'app_store');
+    });
+    $('btn-restart').addEventListener('click', () => showOnly('screen-intro'));
+  </script>
+</body>
+</html>

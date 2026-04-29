@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>카오스 드롭 — Heart Open</title>
+  <meta name="description" content="예측 불가 질문이 뚝 떨어지는 즉흥 답변 게임">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+  <link rel="stylesheet" href="../shared/tokens.css">
+  <link rel="stylesheet" href="../shared/result-card.css">
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-2NYTV5FKDC"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){ dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'G-2NYTV5FKDC');
+  </script>
+  <script src="../shared/analytics.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
+  <script src="../shared/result-card.js" defer></script>
+  <style>
+    body { background: #1f1a24; }
+    .container { color: #fff; }
+    .stage { padding-top: var(--space-6); text-align: center; }
+    h1 { font-size: 22px; font-weight: 700; }
+    .lead { color: rgba(255,255,255,0.7); font-size: 14px; margin-top: var(--space-2); line-height: 1.6; }
+
+    .start, .next, .cta-restart {
+      margin-top: var(--space-6); width: 100%;
+      background: var(--primary); color: #fff;
+      padding: 16px; font-size: 16px; font-weight: 700;
+      border-radius: var(--radius-pill); box-shadow: var(--shadow-md);
+    }
+
+    .progress { font-size: 12px; color: rgba(255,255,255,0.6); margin-top: var(--space-4); }
+    .stage-drop { min-height: 65vh; position: relative; overflow: hidden; }
+
+    .drop-card {
+      margin: var(--space-6) auto 0;
+      padding: var(--space-6) var(--space-5);
+      border-radius: var(--radius-lg);
+      background: var(--card);
+      color: var(--text-primary);
+      box-shadow: 0 12px 32px rgba(0,0,0,0.4);
+      animation: drop 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+    @keyframes drop {
+      0%   { transform: translateY(-100vh) rotate(-5deg); opacity: 0; }
+      70%  { transform: translateY(10px) rotate(2deg); }
+      100% { transform: translateY(0) rotate(0deg); opacity: 1; }
+    }
+
+    .q-text { font-size: 18px; font-weight: 700; line-height: 1.4; }
+    .choices { display: grid; gap: var(--space-3); margin-top: var(--space-5); }
+    .choice {
+      background: var(--surface-warm);
+      border: 2px solid transparent;
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+      font-size: 15px; font-weight: 600;
+      color: var(--text-primary);
+      transition: transform 0.15s ease, border-color 0.2s ease;
+    }
+    .choice:active { transform: scale(0.98); }
+
+    .reaction {
+      margin-top: var(--space-5);
+      animation: rise 0.5s ease-out;
+    }
+    .reaction img { width: 140px; height: 140px; object-fit: contain; margin: 0 auto; }
+    .reaction-text { color: #fff; font-size: 16px; font-weight: 600; margin-top: var(--space-3); }
+    @keyframes rise {
+      0%   { transform: translateY(60px); opacity: 0; }
+      100% { transform: translateY(0); opacity: 1; }
+    }
+
+    .hidden { display: none !important; }
+
+    @keyframes pop-in { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+    .pop-in { animation: pop-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <section id="screen-intro" class="stage">
+      <h1>🌑 카오스 드롭</h1>
+      <p class="lead">예측 불가 질문이<br>위에서 뚝 떨어진다</p>
+      <button class="start" id="btn-start">드롭 시작</button>
+    </section>
+
+    <section id="screen-drop" class="stage stage-drop hidden">
+      <div class="progress" id="progress"></div>
+      <div id="drop-area"></div>
+    </section>
+
+    <section id="screen-result" class="stage hidden">
+      <div class="result-card pop-in" id="result-card" style="background: var(--card); color: var(--text-primary);">
+        <img id="result-img" src="" alt="">
+        <div class="result-title" id="result-title"></div>
+        <div class="result-desc" id="result-desc"></div>
+        <div class="result-actions">
+          <button class="btn-share" id="btn-share">공유</button>
+          <button class="btn-save" id="btn-save">저장</button>
+        </div>
+        <a class="btn-cta" id="btn-cta" href="https://heartopen.app">앱에서 더 자세히 분석 →</a>
+      </div>
+      <button class="cta-restart" id="btn-restart" style="background:transparent;color:rgba(255,255,255,0.7);box-shadow:none;">다시 드롭</button>
+    </section>
+  </div>
+
+  <script>
+    const CONCEPT_ID = '06';
+    const CONCEPT_NAME = '카오스 드롭';
+    const TOTAL_ROUNDS = 5;
+
+    const QUESTIONS = [
+      { text: '남친이 먼저 자자고 하면?', a: '응 나도 졸려', b: '조금만 더 얘기해', ta: 'P', tb: 'E' },
+      { text: '데이트 중 갑자기 비가 오면?', a: '편의점 들어가서 기다려', b: '비 맞으면서 달려', ta: 'P', tb: 'R' },
+      { text: '카톡 답장이 2시간 뒤에 오면?', a: '바빴나보다', b: '이게 무슨...', ta: 'A', tb: 'E' },
+      { text: '남친 사진첩 볼 수 있다면?', a: '봐도 돼', b: '아니 됩니다', ta: 'S', tb: 'P' },
+      { text: '첫 데이트 장소 결정은?', a: '내가 정할게', b: '네가 정해줘', ta: 'S', tb: 'A' },
+      { text: '연애 1년 기념일에?', a: '여행 가자', b: '맛집 가자', ta: 'R', tb: 'S' },
+      { text: '남친이 다이어트한다면?', a: '같이 해줘', b: '넌 그대로가 좋아', ta: 'P', tb: 'E' },
+      { text: '오늘 기분 최악일 때 남친이 연락하면?', a: '솔직하게 말해', b: '괜찮다고 해', ta: 'E', tb: 'A' },
+      { text: '손 잡기 vs 안기기?', a: '손 잡기', b: '안기기', ta: 'R', tb: 'A' },
+      { text: '남친 친구들이랑 같이 밥?', a: '좋아!', b: '둘이 있고 싶어', ta: 'S', tb: 'A' }
+    ];
+
+    const TYPES = {
+      E: { name: '감정', file: 'emotion.png',    reaction: '감정 솔직하게 잘 표현하는 스타일이네 💕' },
+      S: { name: '사교', file: 'social.png',     reaction: '분위기 메이커 기질 있어 ✨' },
+      A: { name: '애착', file: 'attachment.png', reaction: '안정을 사랑하는 타입이야 🌙' },
+      R: { name: '낭만', file: 'romantic.png',   reaction: '낭만 넘치는 사람이구나 🌸' },
+      P: { name: '현실', file: 'practical.png',  reaction: '현실적인 사랑을 하는 타입이야 🌱' }
+    };
+
+    const CARD_BG = ['#FFF0EC', '#F4EEFF', '#FFF9F7', '#FFE8E8', '#EAF7F0'];
+
+    const $ = (id) => document.getElementById(id);
+    const showOnly = (id) => ['screen-intro','screen-drop','screen-result'].forEach(s =>
+      $(s).classList.toggle('hidden', s !== id));
+
+    let roundIdx = 0;
+    let typeCounts = {};
+    let pickedQuestions = [];
+
+    function shuffle(arr) {
+      const a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    $('btn-start').addEventListener('click', () => {
+      if (window.HeartOpenAnalytics) {
+        HeartOpenAnalytics.trackPageView(CONCEPT_ID, CONCEPT_NAME);
+        HeartOpenAnalytics.trackGameStart(CONCEPT_ID, CONCEPT_NAME);
+      }
+      roundIdx = 0;
+      typeCounts = {};
+      pickedQuestions = shuffle(QUESTIONS).slice(0, TOTAL_ROUNDS);
+      showOnly('screen-drop');
+      renderRound();
+    });
+
+    function renderRound() {
+      const q = pickedQuestions[roundIdx];
+      $('progress').textContent = (roundIdx + 1) + ' / ' + TOTAL_ROUNDS;
+      const area = $('drop-area');
+      area.innerHTML = '';
+      const card = document.createElement('div');
+      card.className = 'drop-card';
+      card.style.background = CARD_BG[Math.floor(Math.random() * CARD_BG.length)];
+      card.innerHTML = `
+        <div class="q-text">${q.text}</div>
+        <div class="choices">
+          <button class="choice" data-choice="a">${q.a}</button>
+          <button class="choice" data-choice="b">${q.b}</button>
+        </div>
+      `;
+      area.appendChild(card);
+      card.querySelectorAll('.choice').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const choice = btn.dataset.choice;
+          const type = choice === 'a' ? q.ta : q.tb;
+          gtag('event', 'drop_answer', { concept_id: CONCEPT_ID, question_idx: roundIdx, choice });
+          typeCounts[type] = (typeCounts[type] || 0) + 1;
+          showReaction(type);
+        });
+      });
+    }
+
+    function showReaction(type) {
+      const t = TYPES[type];
+      const area = $('drop-area');
+      area.innerHTML = `
+        <div class="reaction">
+          <img src="../assets/characters/${t.file}" alt="${t.name}">
+          <div class="reaction-text">${t.reaction}</div>
+        </div>
+        <button class="next" id="btn-next">${roundIdx < TOTAL_ROUNDS - 1 ? '다음 드롭' : '최종 결과 보기'}</button>
+      `;
+      $('btn-next').addEventListener('click', () => {
+        roundIdx++;
+        if (roundIdx >= TOTAL_ROUNDS) showFinal();
+        else renderRound();
+      });
+    }
+
+    function showFinal() {
+      let topType = 'E', topCount = -1;
+      Object.entries(typeCounts).forEach(([t, c]) => { if (c > topCount) { topCount = c; topType = t; } });
+      const t = TYPES[topType];
+      $('result-img').src = '../assets/characters/' + t.file;
+      $('result-img').alt = t.name + ' 타입';
+      $('result-title').textContent = '카오스 결과: ' + t.name + ' 타입';
+      $('result-desc').textContent = t.reaction;
+      showOnly('screen-result');
+      if (window.HeartOpenAnalytics) HeartOpenAnalytics.trackResultView(CONCEPT_ID, topType);
+    }
+
+    $('btn-share').addEventListener('click', () => {
+      HeartOpenResultCard.shareResult({
+        conceptId: CONCEPT_ID,
+        title: 'Heart Open 카오스 드롭 — ' + $('result-title').textContent,
+        url: location.href
+      });
+    });
+    $('btn-save').addEventListener('click', () => HeartOpenResultCard.saveResult('#result-card'));
+    $('btn-cta').addEventListener('click', () => {
+      if (window.HeartOpenAnalytics) HeartOpenAnalytics.trackCtaClick(CONCEPT_ID, 'app_store');
+    });
+    $('btn-restart').addEventListener('click', () => showOnly('screen-intro'));
+  </script>
+</body>
+</html>

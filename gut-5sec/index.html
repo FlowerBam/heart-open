@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>직감 5초 — Heart Open</title>
+  <meta name="description" content="5초 안에 직감으로만 답하는 초간단 연애 퀴즈">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+  <link rel="stylesheet" href="../shared/tokens.css">
+  <link rel="stylesheet" href="../shared/result-card.css">
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-2NYTV5FKDC"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){ dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'G-2NYTV5FKDC');
+  </script>
+  <script src="../shared/analytics.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
+  <script src="../shared/result-card.js" defer></script>
+  <style>
+    .stage { padding-top: var(--space-6); text-align: center; }
+    h1 { font-size: 24px; font-weight: 800; }
+    .lead { color: var(--text-secondary); font-size: 14px; margin-top: var(--space-2); line-height: 1.6; }
+
+    .start, .cta-restart {
+      margin-top: var(--space-6); width: 100%;
+      background: var(--primary); color: #fff;
+      padding: 16px; font-size: 16px; font-weight: 700;
+      border-radius: var(--radius-pill); box-shadow: var(--shadow-md);
+    }
+
+    .countdown-num {
+      margin-top: var(--space-8);
+      font-size: 96px; font-weight: 800;
+      color: var(--primary-dark); line-height: 1;
+    }
+
+    .timer-rel { position: relative; width: 120px; height: 120px; margin: var(--space-6) auto 0; }
+    .timer-circle { width: 120px; height: 120px; transform: rotate(-90deg); }
+    .timer-circle .bg { fill: none; stroke: var(--accent-surface); stroke-width: 6; }
+    .timer-circle .fg {
+      fill: none; stroke: var(--primary); stroke-width: 6; stroke-linecap: round;
+      stroke-dasharray: 283; stroke-dashoffset: 0;
+      animation: countdown 5s linear forwards;
+    }
+    @keyframes countdown { to { stroke-dashoffset: 283; } }
+    .timer-circle.hot .fg { stroke: #ff3b6b; }
+    .timer-num {
+      position: absolute; left: 50%; top: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 40px; font-weight: 800; color: var(--primary-dark);
+    }
+
+    .q-text {
+      margin-top: var(--space-6);
+      font-size: 22px; font-weight: 700; line-height: 1.4;
+    }
+    .choices {
+      display: grid; gap: var(--space-3);
+      margin-top: var(--space-6);
+    }
+    .choice {
+      background: var(--surface-warm);
+      border: 2px solid transparent;
+      border-radius: var(--radius-md);
+      padding: 20px;
+      font-size: 17px; font-weight: 700;
+      color: var(--text-primary);
+      min-height: 64px;
+      transition: transform 0.1s ease;
+    }
+    .choice:active { transform: scale(0.97); }
+
+    .hidden { display: none !important; }
+
+    @keyframes pop-in { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+    .pop-in { animation: pop-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <section id="screen-intro" class="stage">
+      <h1>⚡ 직감 5초</h1>
+      <p class="lead">생각하지 마. 그냥 직감대로 답해.<br>5초 후 결과 나옴.</p>
+      <button class="start" id="btn-start">시작</button>
+    </section>
+
+    <section id="screen-ready" class="stage hidden">
+      <p class="lead">준비...</p>
+      <div class="countdown-num" id="ready-num">3</div>
+    </section>
+
+    <section id="screen-quiz" class="stage hidden">
+      <div class="timer-rel">
+        <svg class="timer-circle" id="timer-svg" viewBox="0 0 100 100">
+          <circle class="bg" cx="50" cy="50" r="45"></circle>
+          <circle class="fg" id="timer-fg" cx="50" cy="50" r="45"></circle>
+        </svg>
+        <div class="timer-num" id="timer-num">5</div>
+      </div>
+      <div class="q-text" id="q-text"></div>
+      <div class="choices">
+        <button class="choice" data-choice="a" id="choice-a"></button>
+        <button class="choice" data-choice="b" id="choice-b"></button>
+      </div>
+    </section>
+
+    <section id="screen-result" class="stage hidden">
+      <div class="result-card pop-in" id="result-card">
+        <img id="result-img" src="" alt="">
+        <div class="result-title" id="result-title"></div>
+        <div class="result-desc" id="result-desc"></div>
+        <div class="result-actions">
+          <button class="btn-share" id="btn-share">공유</button>
+          <button class="btn-save" id="btn-save">저장</button>
+        </div>
+        <a class="btn-cta" id="btn-cta" href="https://heartopen.app">앱에서 더 자세히 분석 →</a>
+      </div>
+      <button class="cta-restart" id="btn-restart" style="background:transparent;color:var(--text-secondary);box-shadow:none;">다시 해보기</button>
+    </section>
+  </div>
+
+  <script>
+    const CONCEPT_ID = '09';
+    const CONCEPT_NAME = '직감 5초';
+
+    const QUESTIONS = [
+      { text: '남친이 갑자기 사랑해라고 하면?', a: '나도 사랑해 ❤️', b: '갑자기 왜? 😂', ta: 'E', tb: 'S' },
+      { text: '오늘 기분 한 단어로?', a: '설레', b: '편안해', ta: 'R', tb: 'A' },
+      { text: '남친한테 솔직하게 말하는 편?', a: '응 다 말해', b: '아니 숨겨', ta: 'E', tb: 'A' },
+      { text: '지금 남친 보고 싶어?', a: '엄청나게', b: '조금', ta: 'E', tb: 'P' },
+      { text: '연애에서 중요한 건?', a: '감정 공유', b: '서로 존중', ta: 'E', tb: 'P' }
+    ];
+
+    const TYPES = {
+      E: { name: '감정', file: 'emotion.png',    desc: '직감은 감정을 솔직하게 표현하라고 말해' },
+      S: { name: '사교', file: 'social.png',     desc: '직감은 가볍게 즐기는 사교형이래' },
+      A: { name: '애착', file: 'attachment.png', desc: '직감은 안정과 신뢰를 원해' },
+      R: { name: '낭만', file: 'romantic.png',   desc: '직감은 낭만과 설렘에 끌려' },
+      P: { name: '현실', file: 'practical.png',  desc: '직감은 현실적이고 단단해' }
+    };
+
+    const $ = (id) => document.getElementById(id);
+    const showOnly = (id) => ['screen-intro','screen-ready','screen-quiz','screen-result'].forEach(s =>
+      $(s).classList.toggle('hidden', s !== id));
+
+    let currentQ = null;
+    let timerInterval = null;
+    let timeoutId = null;
+    let startTime = 0;
+    let answered = false;
+
+    $('btn-start').addEventListener('click', () => {
+      if (window.HeartOpenAnalytics) {
+        HeartOpenAnalytics.trackPageView(CONCEPT_ID, CONCEPT_NAME);
+        HeartOpenAnalytics.trackGameStart(CONCEPT_ID, CONCEPT_NAME);
+      }
+      runReady();
+    });
+
+    function runReady() {
+      showOnly('screen-ready');
+      let n = 3;
+      $('ready-num').textContent = n;
+      const iv = setInterval(() => {
+        n--;
+        if (n <= 0) {
+          clearInterval(iv);
+          startQuiz();
+        } else {
+          $('ready-num').textContent = n;
+        }
+      }, 700);
+    }
+
+    function startQuiz() {
+      currentQ = QUESTIONS[Math.floor(Math.random() * QUESTIONS.length)];
+      answered = false;
+      $('q-text').textContent = currentQ.text;
+      $('choice-a').textContent = currentQ.a;
+      $('choice-b').textContent = currentQ.b;
+      const fg = $('timer-fg');
+      fg.style.animation = 'none';
+      void fg.getBoundingClientRect();
+      fg.style.animation = 'countdown 5s linear forwards';
+      $('timer-svg').classList.remove('hot');
+      showOnly('screen-quiz');
+
+      let timeLeft = 5;
+      $('timer-num').textContent = timeLeft;
+      startTime = Date.now();
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        $('timer-num').textContent = Math.max(0, timeLeft);
+        if (timeLeft <= 2) $('timer-svg').classList.add('hot');
+      }, 1000);
+      timeoutId = setTimeout(() => {
+        if (!answered) handleChoice(null);
+      }, 5000);
+    }
+
+    document.querySelectorAll('.choice').forEach(btn => {
+      btn.addEventListener('click', () => handleChoice(btn.dataset.choice));
+    });
+
+    function handleChoice(choice) {
+      if (answered) return;
+      answered = true;
+      clearInterval(timerInterval);
+      clearTimeout(timeoutId);
+      const remaining = Math.max(0, 5 - Math.round((Date.now() - startTime) / 1000));
+      let type;
+      if (choice === null) {
+        type = ['E','S','A','R','P'][Math.floor(Math.random() * 5)];
+        gtag('event', 'gut_answer', { concept_id: CONCEPT_ID, choice: 'timeout', time_remaining: 0 });
+      } else {
+        type = choice === 'a' ? currentQ.ta : currentQ.tb;
+        gtag('event', 'gut_answer', { concept_id: CONCEPT_ID, choice, time_remaining: remaining });
+      }
+      showResult(type, choice === null);
+    }
+
+    function showResult(type, timedOut) {
+      const t = TYPES[type];
+      $('result-img').src = '../assets/characters/' + t.file;
+      $('result-img').alt = t.name + ' 타입';
+      $('result-title').textContent = '직감은 ' + t.name + ' 타입 ✨';
+      $('result-desc').textContent = timedOut ? '직감이 없었나봐 😄 다시 해볼래?' : t.desc;
+      showOnly('screen-result');
+      if (window.HeartOpenAnalytics) HeartOpenAnalytics.trackResultView(CONCEPT_ID, type);
+    }
+
+    $('btn-share').addEventListener('click', () => {
+      HeartOpenResultCard.shareResult({
+        conceptId: CONCEPT_ID,
+        title: 'Heart Open 직감 5초 — ' + $('result-title').textContent,
+        url: location.href
+      });
+    });
+    $('btn-save').addEventListener('click', () => HeartOpenResultCard.saveResult('#result-card'));
+    $('btn-cta').addEventListener('click', () => {
+      if (window.HeartOpenAnalytics) HeartOpenAnalytics.trackCtaClick(CONCEPT_ID, 'app_store');
+    });
+    $('btn-restart').addEventListener('click', () => showOnly('screen-intro'));
+  </script>
+</body>
+</html>
