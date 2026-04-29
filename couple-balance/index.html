@@ -28,6 +28,7 @@
   <script src="../_shared/share-caption.js" defer></script>
   <script src="../_shared/revisit-hook.js" defer></script>
   <script src="../_shared/stage2-engagement.js" defer></script>
+  <script src="../_shared/stage3-signature.js" defer></script>
   <style>
     .stage { padding-top: var(--space-6); text-align: center; }
     h1 { font-size: 22px; font-weight: 700; }
@@ -91,6 +92,96 @@
 
     @keyframes pop-in { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
     .pop-in { animation: pop-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+
+    /* Stage 3 — Signature ★ */
+    .seesaw-wrap {
+      width: 100%;
+      max-width: 320px;
+      margin: 0 auto var(--space-4);
+      display: block;
+    }
+    .seesaw-wrap svg { width: 100%; height: auto; display: block; }
+    .seesaw-beam-grp {
+      transform: rotate(var(--tilt, 0deg));
+      transform-origin: 150px 60px;
+      transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .seesaw-fulcrum  { fill: var(--primary-dark); }
+    .seesaw-beam     { stroke: var(--primary-dark); stroke-width: 5; stroke-linecap: round; }
+    .seesaw-weight-l { fill: var(--primary); }
+    .seesaw-weight-r { fill: var(--accent, var(--primary-dark)); }
+    .seesaw-weight-l, .seesaw-weight-r { transition: r 0.3s ease; }
+    .seesaw-wrap.leveling .seesaw-beam-grp {
+      transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+      transform: rotate(0deg);
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .seesaw-beam-grp { transition: none !important; }
+      .seesaw-wrap.leveling .seesaw-beam-grp { transition: none !important; }
+    }
+
+    /* Stage 3 — SFX toggle (result card 우상단) */
+    .result-card { position: relative; }
+    .sfx-toggle {
+      position: absolute; top: 12px; right: 12px;
+      width: 36px; height: 36px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.85);
+      border: 1px solid rgba(0,0,0,0.06);
+      box-shadow: var(--shadow-sm);
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 16px; line-height: 1;
+      z-index: 5;
+    }
+    .sfx-toggle[aria-pressed="true"] { background: var(--primary); color: #fff; }
+
+    /* Stage 3 — ESARP 변주 (5종 톤) */
+    .result-card.tone-E { background: linear-gradient(180deg, #FFE3EC 0%, #FFF3F7 60%); }
+    .result-card.tone-S { background: linear-gradient(180deg, #FFE9D1 0%, #FFF6EC 60%); }
+    .result-card.tone-A { background: linear-gradient(180deg, #ECE3F7 0%, #F7F3FC 60%); }
+    .result-card.tone-R { background: linear-gradient(180deg, #FFE0EE 0%, #FFF1F8 60%); }
+    .result-card.tone-P { background: linear-gradient(180deg, #E2F1E7 0%, #F2F8F4 60%); }
+    .result-card.tone-E .result-title { font-style: italic; }
+    .result-card.tone-S .result-title { letter-spacing: 0.3px; }
+    .result-card.tone-A .result-title { font-weight: 700; }
+    .result-card.tone-P { box-shadow: var(--shadow-sm); }
+    .result-card.tone-R::before {
+      content: '🌸 ✦ 🌸';
+      display: block;
+      font-size: 14px;
+      letter-spacing: 8px;
+      opacity: 0.7;
+      margin-bottom: 4px;
+    }
+    .esarp-greeting, .esarp-closing {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+    .esarp-greeting { margin-top: var(--space-2); font-style: italic; }
+    .esarp-closing  { margin-top: var(--space-1, 4px); font-weight: 600; color: var(--primary-dark); }
+
+    /* Stage 3 — Variant B (등급 강조, 점수 숨김) */
+    .result-card.variant-b .gauge-wrap { display: none; }
+    .grade-big {
+      font-size: 96px;
+      font-weight: 800;
+      line-height: 1;
+      color: var(--primary-dark);
+      margin: var(--space-3) 0 var(--space-2);
+    }
+    .grade-line {
+      font-size: 15px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* Stage 3 — seesaw → gauge swap 트랜지션 */
+    @keyframes fade-out-up { to { transform: translateY(-12px); opacity: 0; } }
+    .seesaw-wrap.swap-out { animation: fade-out-up 0.45s ease-in forwards; }
+    @media (prefers-reduced-motion: reduce) {
+      .seesaw-wrap.swap-out { animation: none !important; opacity: 0; }
+    }
   </style>
 </head>
 <body data-concept-id="couple-balance" data-concept-name="커플 밸런스" data-revisit-hooks="partner,friend" data-share-hashtags="하트오픈밸런스,커플점수">
@@ -102,7 +193,17 @@
     </section>
 
     <section id="screen-game" class="stage hidden">
-      <div class="progress-label" id="progress-label">1 / 5</div>
+      <div class="progress-label" id="progress-label" role="progressbar" aria-valuemin="1" aria-valuemax="5" aria-valuenow="1">1 / 5</div>
+      <div class="seesaw-wrap" id="seesaw-wrap" aria-hidden="true">
+        <svg viewBox="0 0 300 110" focusable="false">
+          <g class="seesaw-beam-grp">
+            <line class="seesaw-beam" x1="40" y1="60" x2="260" y2="60"/>
+            <circle class="seesaw-weight-l" cx="60"  cy="50" r="14"/>
+            <circle class="seesaw-weight-r" cx="240" cy="50" r="14"/>
+          </g>
+          <polygon class="seesaw-fulcrum" points="135,60 165,60 150,95"/>
+        </svg>
+      </div>
       <div class="balance-card" id="balance-card">
         <div class="balance-q" id="balance-q"></div>
         <div class="balance-row">
@@ -115,6 +216,8 @@
 
     <section id="screen-result" class="stage hidden">
       <div class="result-card pop-in" id="result-card" role="status" aria-live="polite" aria-atomic="true">
+        <button class="sfx-toggle" id="btn-sfx" type="button" aria-pressed="false" aria-label="사운드 켜기/끄기" title="사운드 토글">🔇</button>
+        <div class="grade-big hidden" id="grade-big" aria-hidden="true"></div>
         <div class="gauge-wrap">
           <svg width="200" height="200" viewBox="0 0 200 200">
             <circle cx="100" cy="100" r="86" fill="none" stroke="var(--accent-surface)" stroke-width="14"/>
@@ -124,8 +227,11 @@
           <div class="gauge-text" id="gauge-text">0</div>
         </div>
         <img id="result-img" src="" alt="">
+        <div class="esarp-greeting" id="esarp-greeting" aria-hidden="true"></div>
         <div class="result-title" id="result-title"></div>
+        <div class="grade-line hidden" id="grade-line" aria-hidden="true"></div>
         <div class="result-desc" id="result-desc"></div>
+        <div class="esarp-closing" id="esarp-closing" aria-hidden="true"></div>
         <div class="result-actions">
           <button class="btn-share" id="btn-share">공유</button>
           <button class="btn-save" id="btn-save">저장</button>
@@ -178,7 +284,9 @@
 
     function renderQ() {
       const q = QUESTIONS[qi];
-      $('progress-label').textContent = (qi + 1) + ' / 5';
+      const label = $('progress-label');
+      label.textContent = (qi + 1) + ' / 5';
+      label.setAttribute('aria-valuenow', String(qi + 1));
       $('balance-q').textContent = q.text;
       $('side-left').textContent = q.left.label;
       $('side-right').textContent = q.right.label;
@@ -188,16 +296,44 @@
       card.style.opacity = '1';
     }
 
+    // Stage 3 — 시소 기울기 업데이트 (좌/우 누적 차이 × 6deg).
+    // prefers-reduced-motion: 트랜지션 없이 즉시 적용.
+    function updateSeesaw() {
+      const leftCount  = choices.filter(c => c === 'left').length;
+      const rightCount = choices.filter(c => c === 'right').length;
+      const tilt = (rightCount - leftCount) * 6;
+      document.documentElement.style.setProperty('--tilt', tilt + 'deg');
+      // 시소 햅틱 — 기울기가 바뀔 때 light 한 번
+      if (window.HeartOpenHaptic) HeartOpenHaptic.light();
+    }
+
     function pickSide(side) {
       const card = $('balance-card');
       card.classList.add(side === 'left' ? 'tilt-left' : 'tilt-right');
       gtag('event', 'round_complete', { concept_id: CONCEPT_ID, round: qi + 1, choice: side });
       choices.push(side);
+      updateSeesaw();
+      // 좌/우 음 — 좌=낮은음 C5(chime), 우=높은음 G5(reveal). 토글 OFF면 sfx.js에서 no-op.
+      if (window.HeartOpenSfx) HeartOpenSfx.playSfx(side === 'left' ? 'chime' : 'reveal');
       setTimeout(() => {
         qi++;
         if (qi < QUESTIONS.length) renderQ();
-        else showResult();
+        else finishRounds();
       }, 420);
+    }
+
+    // Stage 3 — 5라운드 종료 시 시소를 수평으로 → 게이지 reveal swap 트랜지션
+    function finishRounds() {
+      const wrap = $('seesaw-wrap');
+      // 수평으로 leveling — 0.7s
+      document.documentElement.style.setProperty('--tilt', '0deg');
+      if (wrap) wrap.classList.add('leveling');
+      const reduced = !!(window.HeartOpenMotion && window.HeartOpenMotion.reduced);
+      const wait = reduced ? 0 : 700;
+      setTimeout(() => {
+        if (wrap) wrap.classList.add('swap-out');
+        setTimeout(showResult, reduced ? 0 : 320);
+      }, wait);
     }
 
     // 점수 공식 재설계 — ESARP 일관성 + 밸런스 정규화 (evolution/20_couple_balance_evo.md Must)
@@ -217,6 +353,14 @@
       };
     }
 
+    // Stage 3 — 점수 → 등급 (Variant B). 90+ S / 75+ A / 60+ B / else C
+    function scoreGrade(score) {
+      if (score >= 90) return { grade: 'S', line: '완벽한 합 — 이대로만 가줘 💎' };
+      if (score >= 75) return { grade: 'A', line: '잘 맞는 커플 — 같이 있으면 편해 ✨' };
+      if (score >= 60) return { grade: 'B', line: '서로 알아가는 중 — 충분히 좋아 🌱' };
+      return                { grade: 'C', line: '차이가 있어도 괜찮아 — 그래서 배워 🔥' };
+    }
+
     function showResult() {
       const calc = calcScore(choices);
       const { score, consistency, balanceScore, types, freq } = calc;
@@ -227,7 +371,39 @@
       const label = (SCORE_BAND_LABELS[band] && SCORE_BAND_LABELS[band][mainType]) || couple.name;
       $('result-img').src = '../assets/characters/' + couple.file;
       $('result-img').alt = couple.name;
-      $('result-title').textContent = label + ' (' + score + '점)';
+
+      // Stage 3 — A/B variant 부여 (sessionStorage 우선, 첫 부여 시 GA4 ab_assigned 1회)
+      const variant = (window.HeartOpenAbVariant
+        ? HeartOpenAbVariant.assignVariant(CONCEPT_ID)
+        : 'A');
+      const card = $('result-card');
+      card.classList.toggle('variant-b', variant === 'B');
+
+      // ESARP 변주 — 결과 카드 톤 클래스
+      ['tone-E','tone-S','tone-A','tone-R','tone-P'].forEach(c => card.classList.remove(c));
+      card.classList.add('tone-' + mainType);
+
+      // ESARP 캐릭터 직접 멘트 — greeting + closing
+      const voice = (window.HeartOpenEsarpVoice && HeartOpenEsarpVoice.esarpVoice[mainType]) || null;
+      $('esarp-greeting').textContent = voice ? voice.greeting : '';
+      $('esarp-closing').textContent  = voice ? voice.closing : '';
+
+      // Variant A: 점수 강조 (큰 숫자 + 게이지 + 커플 타입)
+      // Variant B: 등급 강조 ("S/A/B/C" + 한 줄 평, 점수 숨김)
+      const gradeBig  = $('grade-big');
+      const gradeLine = $('grade-line');
+      if (variant === 'B') {
+        const g = scoreGrade(score);
+        gradeBig.textContent = g.grade;
+        gradeBig.classList.remove('hidden'); gradeBig.removeAttribute('aria-hidden');
+        gradeLine.textContent = g.line;
+        gradeLine.classList.remove('hidden'); gradeLine.removeAttribute('aria-hidden');
+        $('result-title').textContent = label;
+      } else {
+        gradeBig.classList.add('hidden'); gradeBig.setAttribute('aria-hidden', 'true');
+        gradeLine.classList.add('hidden'); gradeLine.setAttribute('aria-hidden', 'true');
+        $('result-title').textContent = label + ' (' + score + '점)';
+      }
 
       // localStorage 점수 이력 (Stage 2 Must, evolution/20)
       let trendNote = '';
@@ -262,7 +438,7 @@
         arc.setAttribute('stroke-dashoffset', offset);
       }, 100);
 
-      gtag('event', 'balance_result', { concept_id: CONCEPT_ID, score, couple_type: mainType, consistency, balance_score: balanceScore });
+      gtag('event', 'balance_result', { concept_id: CONCEPT_ID, score, couple_type: mainType, consistency, balance_score: balanceScore, ab_variant: variant });
       if (window.HeartOpenAnalytics) HeartOpenAnalytics.trackResultView(CONCEPT_ID, mainType);
       showOnly('screen-result');
     }
@@ -276,11 +452,40 @@
         HeartOpenAnalytics.trackGameStart(CONCEPT_ID, CONCEPT_NAME);
       }
       qi = 0; choices.length = 0;
+      // Stage 3 — 시소 초기화
+      document.documentElement.style.setProperty('--tilt', '0deg');
+      const sw = $('seesaw-wrap');
+      if (sw) sw.classList.remove('leveling', 'swap-out');
       renderQ();
       showOnly('screen-game');
     });
 
+    // Stage 3 — SFX 토글 (기본 OFF, 사용자 동의 후 ON)
+    function syncSfxToggleUi() {
+      const btn = $('btn-sfx');
+      if (!btn) return;
+      const on = !!(window.HeartOpenSfx && HeartOpenSfx.isEnabled());
+      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      btn.textContent = on ? '🔊' : '🔇';
+      btn.setAttribute('aria-label', on ? '사운드 끄기' : '사운드 켜기');
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+      syncSfxToggleUi();
+      const btn = $('btn-sfx');
+      if (btn) {
+        btn.addEventListener('click', () => {
+          if (!window.HeartOpenSfx) return;
+          const on = !HeartOpenSfx.isEnabled();
+          HeartOpenSfx.setEnabled(on);
+          syncSfxToggleUi();
+          if (on) HeartOpenSfx.playSfx('chime');
+        });
+      }
+    });
+
     $('btn-share').addEventListener('click', () => {
+      const v = (window.HeartOpenAbVariant ? HeartOpenAbVariant.getVariant(CONCEPT_ID) : null);
+      gtag('event', 'share', { concept_id: CONCEPT_ID, ab_variant: v });
       HeartOpenResultCard.shareResult({
         conceptId: CONCEPT_ID,
         title: 'Heart Open 커플 밸런스 — ' + $('result-title').textContent,
@@ -296,6 +501,13 @@
       arc.style.transition = 'none';
       arc.setAttribute('stroke-dashoffset', '540');
       $('gauge-text').textContent = '0';
+      // Stage 3 — 결과 카드 톤/variant 초기화
+      const card = $('result-card');
+      ['tone-E','tone-S','tone-A','tone-R','tone-P','variant-b'].forEach(c => card.classList.remove(c));
+      $('grade-big').classList.add('hidden');
+      $('grade-line').classList.add('hidden');
+      $('esarp-greeting').textContent = '';
+      $('esarp-closing').textContent = '';
       showOnly('screen-intro');
     });
   </script>

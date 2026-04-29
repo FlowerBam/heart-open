@@ -1,0 +1,213 @@
+/* Heart Open — Stage 1 Foundation Design Tokens
+ * Source: heart-open-concepts/evolution/stage_taxonomy.md (HEAAA-213)
+ * Issue:  HEAAA-218
+ *
+ * Stage 1 wave 모든 컨셉이 import해서 일관성 유지.
+ * 사용 예: <link rel="stylesheet" href="../_shared/tokens.css">
+ *
+ * 이 파일은 기존 shared/tokens.css의 브랜드/스페이싱 토큰을 상속하고,
+ * Stage 1 공통(그라디언트·트랜지션 곡선·접근성 패턴)을 한 곳에 모은 정본이다.
+ */
+
+:root {
+  /* ─── Brand & Surfaces ─── */
+  --primary: #FF6F91;
+  --primary-light: #FFB3C6;
+  --primary-dark: #D94F78;
+  --accent: #C3B1E1;
+  --accent-surface: #F4EEFF;
+
+  --bg: #FFF9F7;
+  --surface-warm: #FFF0EC;
+  --card: #FFFFFF;
+
+  --text-primary: #1A1A1A;
+  --text-secondary: #6B6B6B;
+  --success: #82C09A;
+
+  /* ─── ESARP type colors ─── */
+  --type-emotion:    #FF6F91;
+  --type-social:     #FFB347;
+  --type-attachment: #C3B1E1;
+  --type-romantic:   #FF9EC4;
+  --type-practical:  #82C09A;
+
+  /* ─── ESARP gradients (135deg standard) ─── */
+  --grad-E: linear-gradient(135deg, #FFB3C6 0%, #FF6F91 100%);
+  --grad-S: linear-gradient(135deg, #FFD9A8 0%, #FFB347 100%);
+  --grad-A: linear-gradient(135deg, #E5D9F2 0%, #C3B1E1 100%);
+  --grad-R: linear-gradient(135deg, #FFD0E4 0%, #FF9EC4 100%);
+  --grad-P: linear-gradient(135deg, #C2E0CC 0%, #82C09A 100%);
+
+  /* ─── ESARP card glows ─── */
+  --glow-E: 0 8px 32px rgba(255, 111, 145, 0.25);
+  --glow-S: 0 8px 32px rgba(255, 179,  71, 0.25);
+  --glow-A: 0 8px 32px rgba(195, 177, 225, 0.30);
+  --glow-R: 0 8px 32px rgba(255, 158, 196, 0.25);
+  --glow-P: 0 8px 32px rgba(130, 192, 154, 0.25);
+
+  /* ─── Spacing ─── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+
+  /* ─── Radius ─── */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-pill: 999px;
+
+  /* ─── Shadow ─── */
+  --shadow-sm: 0 1px 2px rgba(26, 26, 26, 0.06);
+  --shadow-md: 0 4px 12px rgba(217, 79, 120, 0.10);
+  --shadow-lg: 0 12px 32px rgba(217, 79, 120, 0.14);
+
+  /* ─── Transition curves ─── */
+  --ease-enter:  cubic-bezier(0.16, 1, 0.3, 1);              /* slide-in */
+  --ease-reveal: cubic-bezier(0.34, 1.56, 0.64, 1);          /* result reveal w/ overshoot */
+  --ease-exit:   cubic-bezier(0.4, 0, 1, 1);                 /* fast exit */
+  --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);    /* slot/card spring */
+
+  --dur-fast: 180ms;
+  --dur-base: 320ms;
+  --dur-slow: 600ms;
+
+  /* ─── Typography hierarchy (Stage 1) ─── */
+  --font-h1-size: 24px;
+  --font-h1-weight: 700;
+  --font-h1-line: 1.3;
+
+  --font-h2-size: 18px;
+  --font-h2-weight: 700;
+  --font-h2-line: 1.4;
+
+  --font-sub-size: 14px;
+  --font-sub-weight: 500;
+  --font-sub-line: 1.55;
+
+  --font-body-size: 15px;
+  --font-body-weight: 400;
+  --font-body-line: 1.6;
+
+  --font-caption-size: 12px;
+  --font-caption-weight: 500;
+  --font-caption-line: 1.4;
+}
+
+/* ─── Typography utility classes ─── */
+.ho-h1 {
+  font-size: var(--font-h1-size);
+  font-weight: var(--font-h1-weight);
+  line-height: var(--font-h1-line);
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+}
+.ho-h2 {
+  font-size: var(--font-h2-size);
+  font-weight: var(--font-h2-weight);
+  line-height: var(--font-h2-line);
+  color: var(--text-primary);
+}
+.ho-sub {
+  font-size: var(--font-sub-size);
+  font-weight: var(--font-sub-weight);
+  line-height: var(--font-sub-line);
+  color: var(--text-secondary);
+}
+.ho-body {
+  font-size: var(--font-body-size);
+  font-weight: var(--font-body-weight);
+  line-height: var(--font-body-line);
+  color: var(--text-primary);
+}
+.ho-caption {
+  font-size: var(--font-caption-size);
+  font-weight: var(--font-caption-weight);
+  line-height: var(--font-caption-line);
+  color: var(--text-secondary);
+}
+
+/* ─── Base reset ─── */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+.container {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-5);
+  min-height: 100vh;
+}
+
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; cursor: pointer; border: none; background: none; }
+img { max-width: 100%; display: block; }
+
+/* ─── Result card (ESARP) ─── */
+.result-card[data-esarp="E"] { background: var(--grad-E); box-shadow: var(--glow-E); }
+.result-card[data-esarp="S"] { background: var(--grad-S); box-shadow: var(--glow-S); }
+.result-card[data-esarp="A"] { background: var(--grad-A); box-shadow: var(--glow-A); }
+.result-card[data-esarp="R"] { background: var(--grad-R); box-shadow: var(--glow-R); }
+.result-card[data-esarp="P"] { background: var(--grad-P); box-shadow: var(--glow-P); }
+
+.result-card {
+  border-radius: var(--radius-lg);
+  padding: var(--space-6) var(--space-5);
+  color: var(--text-primary);
+  animation: ho-reveal var(--dur-slow) var(--ease-reveal) both;
+}
+
+@keyframes ho-reveal {
+  from { transform: translateY(16px) scale(0.96); opacity: 0; }
+  to   { transform: translateY(0)    scale(1);    opacity: 1; }
+}
+
+/* ─── Character cue pulse ─── */
+.char-cue { position: relative; display: inline-block; }
+.cue-emoji {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  font-size: 28px;
+  /* fade-in (200ms) → continuous pulse */
+  animation:
+    ho-cue-fadein 200ms cubic-bezier(0.16, 1, 0.3, 1) both,
+    ho-cue-pulse 1.6s ease-in-out 200ms infinite;
+}
+@keyframes ho-cue-fadein {
+  from { opacity: 0; transform: scale(0.6) rotate(-12deg); }
+  to   { opacity: 1; transform: scale(1)   rotate(0deg); }
+}
+@keyframes ho-cue-pulse {
+  0%, 100% { transform: scale(1)    rotate(0deg); }
+  50%      { transform: scale(1.18) rotate(-6deg); }
+}
+
+/* ─── Focus / active standard ─── */
+button:focus-visible,
+a.btn-cta:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
+}
+button:active { transform: scale(0.96); transition: transform var(--dur-fast) var(--ease-exit); }
+
+/* ─── prefers-reduced-motion fallback ─── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .cue-emoji { animation: none; }
+}

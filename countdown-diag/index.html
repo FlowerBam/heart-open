@@ -28,6 +28,7 @@
   <script src="../_shared/share-caption.js" defer></script>
   <script src="../_shared/revisit-hook.js" defer></script>
   <script src="../_shared/stage2-engagement.js" defer></script>
+  <script src="../_shared/stage3-signature.js" defer></script>
   <style>
     .stage { padding-top: var(--space-6); text-align: center; }
     h1 { font-size: 22px; font-weight: 700; }
@@ -117,6 +118,66 @@
       100% { transform: scale(1); opacity: 1; }
     }
     .count-pulse { animation: count-pulse 0.5s ease-out; }
+
+    /* Stage 3 — Signature ★ */
+    .result-card { position: relative; }
+    .sfx-toggle {
+      position: absolute; top: 12px; right: 12px;
+      width: 36px; height: 36px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.85);
+      border: 1px solid rgba(0,0,0,0.06);
+      box-shadow: var(--shadow-sm);
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 16px; line-height: 1;
+      z-index: 5;
+    }
+    .sfx-toggle[aria-pressed="true"] { background: var(--primary); color: #fff; }
+    .compat-chars img.char-left  { animation: char-left-in  0.6s var(--ease-reveal, cubic-bezier(0.22, 1, 0.36, 1)) both; }
+    .compat-chars img.char-right { animation: char-right-in 0.6s var(--ease-reveal, cubic-bezier(0.22, 1, 0.36, 1)) both; }
+    @keyframes char-left-in  { from { transform: translateX(-100vw); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes char-right-in { from { transform: translateX( 100vw); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    .compat-heart.heart-spawn { animation: heart-burst 0.8s var(--ease-reveal, cubic-bezier(0.22, 1, 0.36, 1)) 0.55s both; }
+    @keyframes heart-burst { from { transform: scale(0); opacity: 0; } 60% { transform: scale(1.4); } to { transform: scale(1); opacity: 1; } }
+    .heart-bubble {
+      position: absolute;
+      font-size: 22px;
+      pointer-events: none;
+      animation: heart-rise 1.4s ease-out forwards;
+    }
+    @keyframes heart-rise {
+      0%   { transform: translate(-50%, 0) scale(0.6); opacity: 0; }
+      20%  { opacity: 1; }
+      100% { transform: translate(-50%, -160px) scale(1.1); opacity: 0; }
+    }
+    .duet-line {
+      margin-top: var(--space-3);
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+    .duet-line .pct-tail { color: var(--primary-dark); font-weight: 700; }
+
+    /* Variant B — gauge-focused result */
+    .gauge-wrap { margin-top: var(--space-4); display: flex; justify-content: center; }
+    .gauge-wrap svg { width: 180px; height: 180px; transform: rotate(-90deg); }
+    .gauge-wrap .gauge-bg   { stroke: rgba(0,0,0,0.06); fill: none; stroke-width: 12; }
+    .gauge-wrap .gauge-fill { stroke: var(--primary); fill: none; stroke-width: 12; stroke-linecap: round; transition: stroke-dashoffset 1.2s var(--ease-reveal, cubic-bezier(0.22, 1, 0.36, 1)); }
+    .gauge-tier {
+      margin-top: var(--space-3);
+      font-size: 28px; font-weight: 800;
+      color: var(--primary-dark);
+    }
+    .variant-b .pct-big { font-size: 28px; opacity: 0.7; font-weight: 700; }
+    .variant-b .compat-chars img { width: 88px; height: 88px; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .compat-chars img.char-left,
+      .compat-chars img.char-right,
+      .compat-heart.heart-spawn,
+      .heart-bubble,
+      .gauge-wrap .gauge-fill { animation: none !important; transition: none !important; }
+    }
   </style>
 </head>
 <body data-concept-id="countdown-diag" data-concept-name="카운트다운 궁합" data-revisit-hooks="tomorrow,partner" data-share-hashtags="하트오픈궁합,커플궁합">
@@ -139,15 +200,25 @@
 
     <section id="screen-result" class="stage hidden">
       <div class="result-card pop-in" id="result-card" role="status" aria-live="polite" aria-atomic="true">
+        <button class="sfx-toggle" id="btn-sfx" type="button" aria-pressed="false" aria-label="사운드 켜기/끄기" title="사운드 토글">🔇</button>
         <div class="names-line" id="names-line-result"></div>
         <div class="pct-big" id="pct-big">0%</div>
+        <div class="gauge-wrap hidden" id="gauge-wrap" aria-hidden="true">
+          <svg viewBox="0 0 120 120" focusable="false" aria-hidden="true">
+            <circle class="gauge-bg"   cx="60" cy="60" r="50"></circle>
+            <circle class="gauge-fill" id="gauge-fill" cx="60" cy="60" r="50"
+                    stroke-dasharray="314" stroke-dashoffset="314"></circle>
+          </svg>
+        </div>
+        <div class="gauge-tier hidden" id="gauge-tier"></div>
         <div class="compat-chars">
           <img id="char-a" src="" alt="">
-          <span class="compat-heart">💞</span>
+          <span class="compat-heart" id="compat-heart">💞</span>
           <img id="char-b" src="" alt="">
         </div>
         <div class="result-title" id="result-title"></div>
         <div class="result-desc" id="result-desc"></div>
+        <div class="duet-line" id="duet-line" aria-live="polite"></div>
         <div class="sim-note">오늘의 운세 시뮬레이션 ✨</div>
         <div class="result-actions">
           <button class="btn-share" id="btn-share">공유</button>
@@ -177,8 +248,23 @@
       return 60 + (hash % 40); // 60..99
     }
 
+    // Stage 3: ESARP 매핑 — char filename → ESARP type
+    const CHAR_TO_ESARP = {
+      'emotion.png': 'E',
+      'social.png': 'S',
+      'attachment.png': 'A',
+      'romantic.png': 'R',
+      'practical.png': 'P',
+    };
+    const TIER_LABEL = { high: '운명', mid: '찰떡', low: '성장', base: '도전' };
+    function tierKey(pct) {
+      if (pct >= 90) return 'high';
+      if (pct >= 80) return 'mid';
+      if (pct >= 70) return 'low';
+      return 'base';
+    }
     function getLevel(pct) {
-      if (pct >= 90) return { label: '운명 커플 💎', chars: ['romantic.png', 'emotion.png'], msg: '이런 궁합은 진짜 드물어! 우리 영원히 행복하자 💕' };
+      if (pct >= 90) return { label: '운명 커플 💎', chars: ['romantic.png', 'emotion.png'], msg: '이런 궁합 드물어 💕' };
       if (pct >= 80) return { label: '찰떡 커플 ✨',  chars: ['attachment.png', 'social.png'], msg: '서로 잘 맞는 커플이야! 이대로만 가줘 🌸' };
       if (pct >= 70) return { label: '성장 커플 🌱', chars: ['practical.png', 'emotion.png'], msg: '함께 맞춰가면 완벽해질 수 있어 ✨' };
       return { label: '도전 커플 🔥', chars: ['social.png', 'practical.png'], msg: '차이가 있어도 괜찮아, 오히려 배울 게 많아!' };
@@ -222,31 +308,156 @@
           if (window.HeartOpenHaptic) HeartOpenHaptic.medium();
           else if (navigator.vibrate) navigator.vibrate(100);
           if (!(window.HeartOpenMotion && window.HeartOpenMotion.reduced)) spawnHearts();
+          if (window.HeartOpenSfx) HeartOpenSfx.playSfx('chime');
         }
         if (count === 1 && window.HeartOpenHaptic) HeartOpenHaptic.light();
       }, 700);
     }
 
+    // Stage 3 — 듀엣 reveal: 두 캐릭터 사이 하트 spawn (3~5개)
+    function spawnDuetHearts() {
+      if (window.HeartOpenMotion && window.HeartOpenMotion.reduced) return;
+      const heart = $('compat-heart');
+      if (!heart) return;
+      const rect = heart.getBoundingClientRect();
+      const layer = document.createElement('div');
+      layer.className = 'heart-rain';
+      document.body.appendChild(layer);
+      const count = 3 + Math.floor(Math.random() * 3);
+      const baseX = rect.left + rect.width / 2;
+      const baseY = rect.top + rect.height / 2;
+      for (let i = 0; i < count; i++) {
+        const b = document.createElement('span');
+        b.className = 'heart-bubble';
+        b.textContent = ['💕','💖','💗','💞'][i % 4];
+        b.style.left = (baseX + (Math.random() * 60 - 30)) + 'px';
+        b.style.top  = (baseY + (Math.random() * 20 - 10)) + 'px';
+        b.style.animationDelay = (Math.random() * 0.25) + 's';
+        layer.appendChild(b);
+        if (window.HeartOpenSfx) {
+          setTimeout(() => HeartOpenSfx.playSfx('pop'), 60 * i);
+        }
+      }
+      setTimeout(() => layer.remove(), 1800);
+    }
+
     function revealResult(n1, n2, target) {
       const lv = getLevel(target);
+      const tier = tierKey(target);
+      const charA = lv.chars[0], charB = lv.chars[1];
+      const esarpA = CHAR_TO_ESARP[charA] || 'E';
+      const esarpB = CHAR_TO_ESARP[charB] || 'A';
+
+      // Stage 3 — A/B variant assign + GA4 ab_assigned 1회
+      const variant = (window.HeartOpenAbVariant
+        ? HeartOpenAbVariant.assignVariant(CONCEPT_ID)
+        : 'A');
+
       $('names-line-result').textContent = (n1 || '나') + ' & ' + (n2 || '남친');
       $('result-title').textContent = lv.label;
       $('result-desc').textContent = lv.msg;
-      $('char-a').src = '../assets/characters/' + lv.chars[0];
-      $('char-b').src = '../assets/characters/' + lv.chars[1];
-      $('char-a').alt = ''; $('char-b').alt = '';
+      const charImgA = $('char-a'), charImgB = $('char-b');
+      charImgA.src = '../assets/characters/' + charA;
+      charImgB.src = '../assets/characters/' + charB;
+      charImgA.alt = ''; charImgB.alt = '';
+      // Stage 3 — 듀엣 인 애니메이션 클래스 재적용
+      charImgA.classList.remove('char-left');  void charImgA.offsetWidth; charImgA.classList.add('char-left');
+      charImgB.classList.remove('char-right'); void charImgB.offsetWidth; charImgB.classList.add('char-right');
+      const heart = $('compat-heart');
+      heart.classList.remove('heart-spawn');   void heart.offsetWidth; heart.classList.add('heart-spawn');
+
+      // ESARP 듀엣 카피
+      const duetEl = $('duet-line');
+      if (window.HeartOpenEsarpVoice) {
+        const v = HeartOpenEsarpVoice.esarpVoice;
+        const a = v[esarpA], b = v[esarpB];
+        if (a && b) {
+          duetEl.innerHTML = (a.greeting + ', ' + b.closing
+            + ' <span class="pct-tail">(' + target + '%)</span>');
+        } else {
+          duetEl.textContent = '';
+        }
+      }
+
+      // Variant rendering
+      const card = $('result-card');
+      card.classList.toggle('variant-b', variant === 'B');
       const pct = $('pct-big');
+      const gw = $('gauge-wrap');
+      const tierEl = $('gauge-tier');
+      if (variant === 'B') {
+        gw.classList.remove('hidden'); gw.removeAttribute('aria-hidden');
+        tierEl.classList.remove('hidden');
+        tierEl.textContent = TIER_LABEL[tier];
+        const dash = 314; // 2π·50 ≈ 314
+        const fill = $('gauge-fill');
+        fill.setAttribute('stroke-dashoffset', dash);
+        // tick into next frame to trigger transition
+        requestAnimationFrame(() => {
+          fill.setAttribute('stroke-dashoffset', dash * (1 - target / 100));
+        });
+      } else {
+        gw.classList.add('hidden'); gw.setAttribute('aria-hidden', 'true');
+        tierEl.classList.add('hidden');
+      }
+
+      // 카운트업 (% reveal)
       let cur = 0;
-      const up = setInterval(() => {
-        cur = Math.min(cur + 3, target);
-        pct.textContent = cur + '%';
-        if (cur >= target) clearInterval(up);
-      }, 30);
-      gtag('event', 'result_view', { concept_id: CONCEPT_ID, pct: target, level: lv.label });
+      pct.textContent = '0%';
+      const reduced = (window.HeartOpenMotion && window.HeartOpenMotion.reduced);
+      if (reduced) {
+        pct.textContent = target + '%';
+      } else {
+        const up = setInterval(() => {
+          cur = Math.min(cur + 3, target);
+          pct.textContent = cur + '%';
+          if (cur >= target) clearInterval(up);
+        }, 30);
+      }
+
+      // 듀엣 reveal SFX
+      if (window.HeartOpenSfx) HeartOpenSfx.playSfx('reveal');
+      // 듀엣 진동 — [60, 30, 60, 30, 200]
+      if (navigator.vibrate && !reduced) {
+        try { navigator.vibrate([60, 30, 60, 30, 200]); } catch (_) {}
+      }
+      // 하트 spawn (3~5개)
+      setTimeout(spawnDuetHearts, 650);
+
+      gtag('event', 'result_view', {
+        concept_id: CONCEPT_ID,
+        pct: target,
+        level: lv.label,
+        compatibility_band: tier,
+        ab_variant: variant,
+      });
       if (window.HeartOpenHaptic) HeartOpenHaptic.reveal();
       if (window.HeartOpenAnalytics) HeartOpenAnalytics.trackResultView(CONCEPT_ID, lv.label);
       showOnly('screen-result');
     }
+
+    // Stage 3 — SFX 토글 UI (기본 OFF, 사용자 동의 후 ON)
+    function syncSfxToggleUi() {
+      const btn = $('btn-sfx');
+      if (!btn) return;
+      const on = !!(window.HeartOpenSfx && HeartOpenSfx.isEnabled());
+      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      btn.textContent = on ? '🔊' : '🔇';
+      btn.setAttribute('aria-label', on ? '사운드 끄기' : '사운드 켜기');
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+      syncSfxToggleUi();
+      const btn = $('btn-sfx');
+      if (btn) {
+        btn.addEventListener('click', () => {
+          if (!window.HeartOpenSfx) return;
+          const on = !HeartOpenSfx.isEnabled();
+          HeartOpenSfx.setEnabled(on);
+          syncSfxToggleUi();
+          if (on) HeartOpenSfx.playSfx('chime');
+        });
+      }
+    });
 
     $('btn-start').addEventListener('click', () => {
       const n1 = $('name1').value.trim();
@@ -260,6 +471,8 @@
     });
 
     $('btn-share').addEventListener('click', () => {
+      const v = (window.HeartOpenAbVariant ? HeartOpenAbVariant.getVariant(CONCEPT_ID) : null);
+      gtag('event', 'share', { concept_id: CONCEPT_ID, ab_variant: v });
       HeartOpenResultCard.shareResult({
         conceptId: CONCEPT_ID,
         title: 'Heart Open 궁합 — ' + $('pct-big').textContent + ' ' + $('result-title').textContent,

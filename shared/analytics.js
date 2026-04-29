@@ -1,6 +1,12 @@
 /* Heart Open — GA4 helpers
  * GA4 ID: G-2NYTV5FKDC
  * Load gtag.js in the page <head>; this file only wraps event helpers.
+ *
+ * 2026-04-30 (HEAAA-221): trackPageView/Start/Result/Share/CtaClick now
+ * also delegate to HeartOpenFunnel (../_shared/ga4-funnel.js) so the
+ * standard intro_view → game_start → mid_step → result_view → share/cta_click
+ * funnel + drop_off are emitted automatically. Existing per-concept call
+ * sites do not need to change.
  */
 
 (function (global) {
@@ -10,35 +16,71 @@
     }
   }
 
+  const funnels = Object.create(null);
+  function getFunnel(conceptId, conceptName) {
+    if (!conceptId || !global.HeartOpenFunnel) return null;
+    if (!funnels[conceptId]) {
+      try {
+        funnels[conceptId] = global.HeartOpenFunnel.create(conceptId, conceptName);
+      } catch (e) { return null; }
+    }
+    return funnels[conceptId];
+  }
+
   function trackPageView(conceptId, conceptName) {
     send('page_view', {
       page_title: conceptName,
       page_location: location.href,
       concept_id: conceptId,
     });
+    const f = getFunnel(conceptId, conceptName);
+    if (f) f.intro();
   }
 
   function trackGameStart(conceptId, conceptName) {
     send('game_start', { concept_id: conceptId, concept_name: conceptName });
+    const f = getFunnel(conceptId, conceptName);
+    if (f) f.start();
   }
 
-  function trackResultView(conceptId, resultType) {
+  function trackStep(conceptId, stepName, extra) {
+    const f = getFunnel(conceptId);
+    if (f) f.step(stepName, extra);
+    else send('mid_step', Object.assign({ concept_id: conceptId, step: stepName }, extra || {}));
+  }
+
+  function trackResultView(conceptId, resultType, timeMs) {
     send('result_view', { concept_id: conceptId, result_type: resultType });
+    const f = getFunnel(conceptId);
+    if (f) f.result(resultType, timeMs);
   }
 
-  function trackShare(conceptId, method) {
-    send('share', { concept_id: conceptId, method: method });
+  function trackShare(conceptId, method, ratio) {
+    send('share', { concept_id: conceptId, method: method, ratio: ratio });
+    const f = getFunnel(conceptId);
+    if (f) f.share(method, ratio);
   }
 
   function trackCtaClick(conceptId, destination) {
-    send('cta_click', { concept_id: conceptId, destination: destination || 'app_store' });
+    const dest = destination || 'app_store';
+    send('cta_click', { concept_id: conceptId, destination: dest });
+    const f = getFunnel(conceptId);
+    if (f) f.cta(dest);
+  }
+
+  function trackRetry(conceptId, attempt) {
+    const f = getFunnel(conceptId);
+    if (f) f.retry(attempt);
+    else send('retry', { concept_id: conceptId, attempt: attempt || 1 });
   }
 
   global.HeartOpenAnalytics = {
     trackPageView,
     trackGameStart,
+    trackStep,
     trackResultView,
     trackShare,
     trackCtaClick,
+    trackRetry,
   };
 })(window);

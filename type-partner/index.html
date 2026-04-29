@@ -28,6 +28,9 @@
   <script src="../_shared/share-caption.js" defer></script>
   <script src="../_shared/revisit-hook.js" defer></script>
   <script src="../_shared/stage2-engagement.js" defer></script>
+  <script src="../_shared/esarp-voice.js" defer></script>
+  <script src="../_shared/sfx.js" defer></script>
+  <script src="../_shared/ab-variant.js" defer></script>
   <style>
     .stage { padding-top: var(--space-6); text-align: center; }
     h1 { font-size: 22px; font-weight: 700; }
@@ -80,6 +83,208 @@
 
     @keyframes pop-in { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
     .pop-in { animation: pop-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+
+    /* Stage 3 — Signature ★ — 카드 합치기 의식 */
+    .merge-lead {
+      font-size: 15px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      margin-top: var(--space-4);
+    }
+    .merge-stage {
+      position: relative;
+      height: 360px;
+      margin-top: var(--space-6);
+      overflow: hidden;
+      touch-action: none;
+    }
+    .merge-card {
+      position: absolute;
+      top: 32px;
+      width: 132px;
+      padding: var(--space-3);
+      background: var(--card);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-md);
+      border: 2px solid transparent;
+      text-align: center;
+      cursor: grab;
+      user-select: none;
+      transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.4s, box-shadow 0.3s;
+      will-change: transform;
+    }
+    .merge-card.dragging { cursor: grabbing; transition: none; }
+    .merge-card img { width: 100%; height: 96px; object-fit: contain; }
+    .merge-card .merge-label { font-size: 13px; font-weight: 700; margin-top: var(--space-2); color: var(--text-primary); }
+    .merge-card .merge-tag { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+    .merge-card.left  { left: 8%; }
+    .merge-card.right { right: 8%; }
+    .merge-card.left.entering  { animation: merge-enter-left  0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
+    .merge-card.right.entering { animation: merge-enter-right 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
+    @keyframes merge-enter-left  { from { transform: translateX(-110vw) rotate(-12deg); opacity: 0; } to { transform: translateX(0) rotate(-4deg); opacity: 1; } }
+    @keyframes merge-enter-right { from { transform: translateX( 110vw) rotate( 12deg); opacity: 0; } to { transform: translateX(0) rotate( 4deg); opacity: 1; } }
+    .merge-card.left  { transform: rotate(-4deg); }
+    .merge-card.right { transform: rotate( 4deg); }
+    .merge-card.shake { animation: merge-shake 0.6s ease-in-out infinite; }
+    @keyframes merge-shake {
+      0%, 100% { transform: translateX(0) rotate(var(--shake-rot, 0deg)); }
+      25%      { transform: translateX(-4px) rotate(var(--shake-rot, 0deg)); }
+      75%      { transform: translateX( 4px) rotate(var(--shake-rot, 0deg)); }
+    }
+    .merge-card.left.shake  { --shake-rot: -4deg; }
+    .merge-card.right.shake { --shake-rot:  4deg; }
+
+    .merge-hint {
+      position: absolute;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 13px;
+      color: var(--text-secondary);
+      font-weight: 600;
+      white-space: nowrap;
+      opacity: 0.85;
+    }
+    .merge-progress {
+      position: absolute;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60%;
+      height: 3px;
+      background: rgba(0,0,0,0.06);
+      border-radius: var(--radius-pill);
+      overflow: hidden;
+    }
+    .merge-progress > div {
+      height: 100%;
+      width: 0%;
+      background: var(--primary);
+      transition: width 0.2s linear;
+    }
+
+    .merge-flash {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background: url('../assets/cards/match.png') center/cover no-repeat, radial-gradient(circle at 50% 50%, rgba(255, 222, 234, 0.95), rgba(255, 255, 255, 0));
+      opacity: 0;
+      z-index: 50;
+    }
+    .merge-flash.go { animation: merge-flash 1.1s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+    @keyframes merge-flash {
+      0%   { opacity: 0; }
+      35%  { opacity: 0.95; }
+      100% { opacity: 0; }
+    }
+    .sparkle-layer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 51;
+      overflow: hidden;
+    }
+    .sparkle-layer .sp {
+      position: absolute;
+      font-size: 28px;
+      animation: sparkle-rise 1.4s ease-out forwards;
+    }
+    @keyframes sparkle-rise {
+      0%   { transform: translate(-50%, 0) scale(0.4); opacity: 0; }
+      30%  { opacity: 1; }
+      100% { transform: translate(-50%, -180px) scale(1.3); opacity: 0; }
+    }
+
+    /* Stage 3 — 결과 화면 */
+    .result-card { position: relative; }
+    .sfx-toggle {
+      position: absolute; top: 12px; right: 12px;
+      width: 36px; height: 36px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.85);
+      border: 1px solid rgba(0,0,0,0.06);
+      box-shadow: var(--shadow-sm);
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 16px; line-height: 1;
+      z-index: 5;
+    }
+    .sfx-toggle[aria-pressed="true"] { background: var(--primary); color: #fff; }
+
+    .partner-bubble {
+      margin-top: var(--space-3);
+      background: var(--accent-surface);
+      border-radius: var(--radius-md);
+      padding: var(--space-3) var(--space-4);
+      text-align: left;
+      position: relative;
+    }
+    .partner-bubble::before {
+      content: '';
+      position: absolute;
+      top: -8px; left: 24px;
+      border-left: 8px solid transparent;
+      border-right: 8px solid transparent;
+      border-bottom: 8px solid var(--accent-surface);
+    }
+    .partner-bubble p { font-size: 14px; font-weight: 700; color: var(--text-primary); line-height: 1.4; }
+    .partner-bubble small { display: block; margin-top: 4px; font-size: 11px; color: var(--text-secondary); }
+
+    .secondary-pair {
+      margin-top: var(--space-3);
+      font-size: 12px;
+      color: var(--text-secondary);
+      padding: var(--space-2) var(--space-3);
+      background: var(--surface-warm);
+      border-radius: var(--radius-md);
+    }
+    .variant-b #result-img { height: 180px !important; }
+    .variant-b .secondary-pair { display: none; }
+
+    .compare-block {
+      margin-top: var(--space-5);
+      padding: var(--space-4);
+      background: var(--card);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+    }
+    .compare-block h3 { font-size: 15px; font-weight: 700; }
+    .compare-options {
+      margin-top: var(--space-3);
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: var(--space-2);
+    }
+    .compare-options button {
+      padding: var(--space-3) 4px;
+      background: var(--surface-warm);
+      border: 2px solid transparent;
+      border-radius: var(--radius-md);
+      font-weight: 700;
+      font-size: 12px;
+      color: var(--text-primary);
+    }
+    .compare-options button.selected { border-color: var(--primary); background: var(--accent-surface); }
+    .compare-result {
+      margin-top: var(--space-3);
+      padding: var(--space-3);
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      line-height: 1.5;
+      text-align: left;
+    }
+    .compare-result.match    { background: linear-gradient(135deg, #FFE3EC, #FFD0DD); color: var(--primary-dark); font-weight: 700; }
+    .compare-result.mismatch { background: var(--surface-warm); color: var(--text-primary); }
+
+    @media (prefers-reduced-motion: reduce) {
+      .merge-card.left.entering,
+      .merge-card.right.entering,
+      .merge-card.shake,
+      .merge-flash.go,
+      .sparkle-layer .sp {
+        animation: none !important;
+        transition: none !important;
+      }
+    }
   </style>
 </head>
 <body data-concept-id="type-partner" data-concept-name="짝꿍 유형" data-revisit-hooks="partner,friend" data-share-hashtags="하트오픈짝꿍,연애짝꿍타입">
@@ -99,11 +304,50 @@
       </div>
     </section>
 
+    <section id="screen-merge" class="stage hidden" aria-live="polite">
+      <h1>두 카드를 합쳐봐 ✨</h1>
+      <p class="merge-lead">스와이프로 가운데 모으면<br>나의 짝꿍이 누군지 보여줄게</p>
+      <div class="merge-stage" id="merge-stage" role="group" aria-label="카드 합치기 의식">
+        <div class="merge-card left entering" id="merge-card-me" role="button" tabindex="0" aria-label="내 카드">
+          <img id="merge-img-me" src="" alt="">
+          <div class="merge-label" id="merge-label-me">나의 카드</div>
+          <div class="merge-tag">— 나</div>
+        </div>
+        <div class="merge-card right entering" id="merge-card-partner" role="button" tabindex="0" aria-label="짝꿍 카드">
+          <img id="merge-img-partner" src="" alt="">
+          <div class="merge-label" id="merge-label-partner">짝꿍 카드</div>
+          <div class="merge-tag">— 짝꿍</div>
+        </div>
+        <div class="merge-hint" id="merge-hint">서로 끌리는 중...</div>
+        <div class="merge-progress" aria-hidden="true"><div id="merge-progress-fill"></div></div>
+      </div>
+    </section>
+
     <section id="screen-result" class="stage hidden">
       <div class="result-card pop-in" id="result-card" role="status" aria-live="polite" aria-atomic="true">
+        <button class="sfx-toggle" id="btn-sfx" type="button" aria-pressed="false" aria-label="사운드 켜기/끄기" title="사운드 토글">🔇</button>
         <img id="result-img" src="" alt="">
         <div class="result-title" id="result-title"></div>
+        <div class="partner-bubble" id="partner-bubble">
+          <p id="partner-bubble-text"></p>
+          <small id="partner-bubble-from"></small>
+        </div>
         <div class="result-desc" id="result-desc"></div>
+        <div class="secondary-pair" id="secondary-pair" hidden></div>
+
+        <div class="compare-block" id="compare-block">
+          <h3>남친 ESARP 골라봐 💞</h3>
+          <p style="font-size:12px;color:var(--text-secondary);margin-top:4px;">남친 타입이랑 우리 짝꿍이 얼마나 맞을까?</p>
+          <div class="compare-options" id="compare-options" role="radiogroup" aria-label="남친 ESARP 선택">
+            <button type="button" data-type="E" role="radio" aria-checked="false">감정<br>E</button>
+            <button type="button" data-type="S" role="radio" aria-checked="false">사교<br>S</button>
+            <button type="button" data-type="A" role="radio" aria-checked="false">애착<br>A</button>
+            <button type="button" data-type="R" role="radio" aria-checked="false">낭만<br>R</button>
+            <button type="button" data-type="P" role="radio" aria-checked="false">현실<br>P</button>
+          </div>
+          <div class="compare-result" id="compare-result" hidden></div>
+        </div>
+
         <div class="result-actions">
           <button class="btn-share" id="btn-share">공유</button>
           <button class="btn-save" id="btn-save">저장</button>
@@ -164,8 +408,11 @@
     const choiceTypes = [];
 
     function showOnly(id) {
-      ['screen-intro','screen-scenario','screen-result'].forEach(s => $(s).classList.toggle('hidden', s !== id));
+      ['screen-intro','screen-scenario','screen-merge','screen-result'].forEach(s => $(s).classList.toggle('hidden', s !== id));
     }
+
+    // 사용자가 1순위로 고른 짝꿍 ESARP 캐시 (compare 모드에서 사용)
+    let lastResult = null;
 
     function renderScenario() {
       const sit = SITUATIONS[si];
@@ -192,34 +439,390 @@
       });
     }
 
-    function showResult() {
-      $('progress-fill').style.width = '100%';
+    function computeResult() {
       const freq = choiceTypes.reduce((acc, t) => { acc[t] = (acc[t] || 0) + 1; return acc; }, {});
       const mainNeed = Object.entries(freq).sort((a,b) => b[1]-a[1])[0][0];
       const pair = PARTNER_PAIRS[mainNeed] || { primary: PARTNER_MAP[mainNeed], secondary: null, why: {} };
       const partnerType = pair.primary;
+      return { mainNeed, pair, partnerType };
+    }
+
+    // Stage 3 — 두 카드 합치기 의식 (Must)
+    function startMergeRitual(result) {
+      $('progress-fill').style.width = '100%';
+      const me = PARTNER_DESC[result.mainNeed] || PARTNER_DESC.E;
+      const pa = PARTNER_DESC[result.partnerType] || PARTNER_DESC.A;
+      $('merge-img-me').src      = '../assets/characters/' + me.file;
+      $('merge-img-me').alt      = '';
+      $('merge-img-partner').src = '../assets/characters/' + pa.file;
+      $('merge-img-partner').alt = '';
+      $('merge-label-me').textContent      = '내 ' + result.mainNeed + '형';
+      $('merge-label-partner').textContent = '짝꿍 ' + result.partnerType + '형';
+
+      const stage = $('merge-stage');
+      // 재진입 시 이전 리스너 누적 방지 — 카드 노드를 clone-replace
+      const cloneReset = (id) => {
+        const el = document.getElementById(id);
+        const fresh = el.cloneNode(true);
+        el.parentNode.replaceChild(fresh, el);
+        return fresh;
+      };
+      const cardMe = cloneReset('merge-card-me');
+      const cardPa = cloneReset('merge-card-partner');
+      // 새로 clone된 노드 안의 img/label은 현재 src/text를 이미 갖고 있음 (위에서 set 후 clone)
+      const fill = $('merge-progress-fill');
+      const reduced = !!(window.HeartOpenMotion && window.HeartOpenMotion.reduced);
+
+      // 등장 애니메이션 트리거
+      cardMe.classList.remove('entering'); void cardMe.offsetWidth; cardMe.classList.add('entering');
+      cardPa.classList.remove('entering'); void cardPa.offsetWidth; cardPa.classList.add('entering');
+      cardMe.style.transform = ''; cardPa.style.transform = '';
+      cardMe.classList.remove('shake', 'dragging');
+      cardPa.classList.remove('shake', 'dragging');
+      $('merge-hint').textContent = '두 카드를 가운데로 합쳐봐 ✨';
+      fill.style.width = '0%';
+
+      showOnly('screen-merge');
+      gtag('event', 'merge_ritual_start', { concept_id: CONCEPT_ID, my_type: result.mainNeed, partner_type: result.partnerType });
+
+      let merged = false;
+      let dragging = null;
+      let startX = 0, startY = 0;
+      let offsetMe = 0, offsetPa = 0;
+      const stageRect = () => stage.getBoundingClientRect();
+      const TARGET_OFFSET = 80; // px each card needs to slide toward center
+
+      function updateProgress() {
+        const total = Math.min(Math.abs(offsetMe), TARGET_OFFSET) + Math.min(Math.abs(offsetPa), TARGET_OFFSET);
+        const pct = Math.min(100, (total / (TARGET_OFFSET * 2)) * 100);
+        fill.style.width = pct + '%';
+        if (pct >= 95 && !merged) doMerge();
+      }
+      function applyTransforms() {
+        cardMe.style.transform = 'translateX(' + offsetMe + 'px) rotate(-4deg)';
+        cardPa.style.transform = 'translateX(' + offsetPa + 'px) rotate( 4deg)';
+      }
+
+      function onPointerDown(card, side) {
+        return function (ev) {
+          if (merged) return;
+          ev.preventDefault();
+          dragging = side;
+          startX = ev.clientX; startY = ev.clientY;
+          card.classList.add('dragging');
+          card.classList.remove('shake');
+          card.setPointerCapture && card.setPointerCapture(ev.pointerId);
+          if (window.HeartOpenHaptic) HeartOpenHaptic.light();
+        };
+      }
+      function onPointerMove(ev) {
+        if (!dragging || merged) return;
+        const dx = ev.clientX - startX;
+        if (dragging === 'me') {
+          offsetMe = Math.max(0, Math.min(dx, TARGET_OFFSET + 20));
+        } else {
+          offsetPa = Math.min(0, Math.max(dx, -(TARGET_OFFSET + 20)));
+        }
+        applyTransforms();
+        updateProgress();
+      }
+      function onPointerUp(card) {
+        return function () {
+          card.classList.remove('dragging');
+          if (merged) return;
+          dragging = null;
+          // 살짝만 끌면 원위치
+          if (Math.abs(offsetMe) < TARGET_OFFSET * 0.5 && Math.abs(offsetPa) < TARGET_OFFSET * 0.5) {
+            // do nothing — wait for next gesture or auto-merge
+          }
+        };
+      }
+      function onTap(side) {
+        return function () {
+          if (merged) return;
+          // 탭 시 해당 카드를 중앙으로 슬라이드
+          if (side === 'me') offsetMe = TARGET_OFFSET;
+          else                offsetPa = -TARGET_OFFSET;
+          applyTransforms();
+          updateProgress();
+          if (window.HeartOpenHaptic) HeartOpenHaptic.light();
+        };
+      }
+
+      cardMe.addEventListener('pointerdown', onPointerDown(cardMe, 'me'));
+      cardPa.addEventListener('pointerdown', onPointerDown(cardPa, 'partner'));
+      stage.addEventListener('pointermove', onPointerMove);
+      cardMe.addEventListener('pointerup', onPointerUp(cardMe));
+      cardPa.addEventListener('pointerup', onPointerUp(cardPa));
+      cardMe.addEventListener('pointercancel', onPointerUp(cardMe));
+      cardPa.addEventListener('pointercancel', onPointerUp(cardPa));
+      cardMe.addEventListener('click', onTap('me'));
+      cardPa.addEventListener('click', onTap('partner'));
+      cardMe.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onTap('me')(); } });
+      cardPa.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onTap('partner')(); } });
+
+      // 1.2초 후에도 미진하면 "끌리는 중..." 흔들림 시작
+      const shakeTimer = setTimeout(() => {
+        if (!merged && !reduced) {
+          cardMe.classList.add('shake');
+          cardPa.classList.add('shake');
+          $('merge-hint').textContent = '서로 끌리는 중...';
+        }
+      }, 1200);
+
+      // 3초 타임아웃 자동 합쳐짐
+      const autoTimer = setTimeout(() => {
+        if (!merged) doMerge(true);
+      }, 3000);
+
+      function cleanupListeners() {
+        clearTimeout(shakeTimer);
+        clearTimeout(autoTimer);
+        stage.removeEventListener('pointermove', onPointerMove);
+      }
+
+      function doMerge(auto) {
+        if (merged) return;
+        merged = true;
+        cleanupListeners();
+        cardMe.classList.remove('shake', 'dragging');
+        cardPa.classList.remove('shake', 'dragging');
+        $('merge-hint').textContent = '✨';
+        fill.style.width = '100%';
+
+        // 가운데로 합치기
+        const meRect = cardMe.getBoundingClientRect();
+        const paRect = cardPa.getBoundingClientRect();
+        const center = (meRect.right + paRect.left) / 2;
+        const meCenter = meRect.left + meRect.width / 2;
+        const paCenter = paRect.left + paRect.width / 2;
+        cardMe.style.transition = 'transform 0.6s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.4s';
+        cardPa.style.transition = 'transform 0.6s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.4s';
+        cardMe.style.transform = 'translateX(' + (center - meCenter) + 'px) rotate(-4deg) scale(0.9)';
+        cardPa.style.transform = 'translateX(' + (center - paCenter) + 'px) rotate( 4deg) scale(0.9)';
+        if (reduced) {
+          // 모션 즉시 완료
+          cardMe.style.transition = 'none';
+          cardPa.style.transition = 'none';
+        }
+
+        // match.png 배경 + ✨ 이펙트
+        spawnMergeFx();
+        if (window.HeartOpenSfx)    HeartOpenSfx.playSfx('chime');
+        if (window.HeartOpenHaptic) HeartOpenHaptic.medium();
+        if (navigator.vibrate && !reduced) { try { navigator.vibrate([40, 30, 60]); } catch (_) {} }
+
+        gtag('event', 'merge_ritual_complete', {
+          concept_id: CONCEPT_ID,
+          my_type: result.mainNeed,
+          partner_type: result.partnerType,
+          mode: auto ? 'auto' : 'user'
+        });
+
+        const delay = reduced ? 0 : 700;
+        setTimeout(() => revealResult(result), delay);
+      }
+    }
+
+    function spawnMergeFx() {
+      const reduced = !!(window.HeartOpenMotion && window.HeartOpenMotion.reduced);
+      // match.png + 그라디언트 플래시
+      const flash = document.createElement('div');
+      flash.className = 'merge-flash';
+      document.body.appendChild(flash);
+      void flash.offsetWidth;
+      if (!reduced) flash.classList.add('go');
+      setTimeout(() => flash.remove(), 1300);
+      if (reduced) return;
+
+      // ✨ 스파클 8개
+      const layer = document.createElement('div');
+      layer.className = 'sparkle-layer';
+      document.body.appendChild(layer);
+      const baseX = window.innerWidth / 2;
+      const baseY = window.innerHeight / 2;
+      const sparkles = ['✨','💫','💖','🌟','💞'];
+      for (let i = 0; i < 10; i++) {
+        const s = document.createElement('span');
+        s.className = 'sp';
+        s.textContent = sparkles[i % sparkles.length];
+        s.style.left = (baseX + (Math.random() * 220 - 110)) + 'px';
+        s.style.top  = (baseY + (Math.random() * 80 - 40)) + 'px';
+        s.style.animationDelay = (Math.random() * 0.3) + 's';
+        layer.appendChild(s);
+      }
+      setTimeout(() => layer.remove(), 1800);
+    }
+
+    function revealResult(result) {
+      const { mainNeed, pair, partnerType } = result;
+      lastResult = result;
+
       const p = PARTNER_DESC[partnerType];
       const sec = pair.secondary && PARTNER_DESC[pair.secondary];
+
+      // A/B variant: A = 1순위 + 2순위 페어, B = 1순위 단독 강조 + 풍부한 해설
+      const variant = (window.HeartOpenAbVariant
+        ? HeartOpenAbVariant.assignVariant(CONCEPT_ID)
+        : 'A');
+      const card = $('result-card');
+      card.classList.toggle('variant-b', variant === 'B');
+
       $('result-img').src = '../assets/characters/' + p.file;
       $('result-img').alt = p.name;
       $('result-title').textContent = '나의 짝꿍은 ' + p.name;
+
       const whyMain = pair.why && pair.why[partnerType];
-      let desc = (whyMain ? whyMain + '. ' : '') + p.desc;
-      if (sec) {
-        const whySec = pair.why && pair.why[pair.secondary];
-        desc += ' · 2순위 ' + sec.name + (whySec ? '(' + whySec + ')' : '');
+      let desc;
+      if (variant === 'B') {
+        // 풍부한 해설 — 왜 이 타입인지 더 길게
+        desc = (whyMain ? '왜 이 타입? · ' + whyMain + '. ' : '')
+             + p.desc
+             + ' 너의 ' + mainNeed + '형 성향이라면 이 사람이 가장 마음을 편안하게 해줄 거야 💕';
+      } else {
+        desc = (whyMain ? whyMain + '. ' : '') + p.desc;
       }
       $('result-desc').textContent = desc;
-      // localStorage my_type 자동 인식 (Should, evolution/14)
+
+      // 2순위 페어 표시 (Variant A 만)
+      const secEl = $('secondary-pair');
+      if (sec && variant === 'A') {
+        const whySec = pair.why && pair.why[pair.secondary];
+        secEl.textContent = '2순위 짝꿍 — ' + sec.name + (whySec ? ' (' + whySec + ')' : '');
+        secEl.hidden = false;
+      } else {
+        secEl.textContent = '';
+        secEl.hidden = true;
+      }
+
+      // ESARP 톤 — 짝꿍 캐릭터 말풍선
+      if (window.HeartOpenEsarpVoice) {
+        const greeting = HeartOpenEsarpVoice.pickLine(partnerType, 'greeting');
+        $('partner-bubble-text').textContent = '"' + (greeting || '만나서 반가워') + '"';
+        $('partner-bubble-from').textContent = '— 너의 짝꿍 ' + p.name;
+      } else {
+        $('partner-bubble-text').textContent = '"만나서 반가워"';
+        $('partner-bubble-from').textContent = '— 너의 짝꿍 ' + p.name;
+      }
+
+      // 비교 모드 초기화
+      resetCompareUi();
+
+      // localStorage my_type
       try {
         if (window.HeartOpenLS) {
           HeartOpenLS.lsSet(HeartOpenLS.lsKey('14', 'my_type'), { type: mainNeed, partner: partnerType, ts: Date.now() });
         }
       } catch (_) {}
-      gtag('event', 'partner_revealed', { concept_id: CONCEPT_ID, my_type: mainNeed, partner_type: partnerType, secondary: pair.secondary || null });
+
+      // SFX reveal — 운명 cue
+      if (window.HeartOpenSfx) HeartOpenSfx.playSfx('reveal');
+      if (window.HeartOpenHaptic) HeartOpenHaptic.reveal();
+
+      gtag('event', 'partner_revealed', {
+        concept_id: CONCEPT_ID,
+        my_type: mainNeed,
+        partner_type: partnerType,
+        secondary: pair.secondary || null,
+        ab_variant: variant,
+      });
       if (window.HeartOpenAnalytics) HeartOpenAnalytics.trackResultView(CONCEPT_ID, partnerType);
       showOnly('screen-result');
+      syncSfxToggleUi();
     }
+
+    function showResult() {
+      const r = computeResult();
+      startMergeRitual(r);
+    }
+
+    // Stage 3 — 남친 ESARP 비교 모드
+    function resetCompareUi() {
+      const opts = $('compare-options');
+      Array.from(opts.querySelectorAll('button')).forEach((b) => {
+        b.classList.remove('selected');
+        b.setAttribute('aria-checked', 'false');
+      });
+      const r = $('compare-result');
+      r.hidden = true;
+      r.className = 'compare-result';
+      r.textContent = '';
+    }
+    function compareWithBoyfriend(bfType) {
+      if (!lastResult) return;
+      const { mainNeed, pair, partnerType } = lastResult;
+      const opts = $('compare-options');
+      Array.from(opts.querySelectorAll('button')).forEach((b) => {
+        const sel = b.dataset.type === bfType;
+        b.classList.toggle('selected', sel);
+        b.setAttribute('aria-checked', sel ? 'true' : 'false');
+      });
+      const out = $('compare-result');
+      out.hidden = false;
+      out.className = 'compare-result';
+      const bfDesc = PARTNER_DESC[bfType];
+      let outcome = 'mismatch';
+      let msg;
+      if (bfType === partnerType) {
+        outcome = 'match';
+        msg = '운명적 매칭 💕 우리 짝꿍 ' + (bfDesc ? bfDesc.name : '') + ' — 그대로 직진해도 좋아!';
+      } else if (pair.secondary && bfType === pair.secondary) {
+        outcome = 'match';
+        msg = '2순위 매칭 ✨ ' + (bfDesc ? bfDesc.name : '') + ' — 너랑 잘 어울리는 보완 짝꿍이야.';
+      } else {
+        // reverse 매핑 — bf가 너를 짝꿍으로 보는지 체크
+        const reverse = PARTNER_PAIRS[bfType];
+        let why = null;
+        if (reverse && reverse.why) {
+          if (reverse.primary === mainNeed)        why = reverse.why[mainNeed];
+          else if (reverse.secondary === mainNeed) why = reverse.why[mainNeed];
+        }
+        msg = '남친은 ' + (bfDesc ? bfDesc.name : bfType + '형')
+            + '. 서로 보완하는 점은 ' + (why || '서로 다른 매력으로 균형 맞추기') + ' 💞';
+      }
+      out.classList.add(outcome);
+      out.textContent = msg;
+      gtag('event', 'partner_compare', {
+        concept_id: CONCEPT_ID,
+        my_type: mainNeed,
+        partner_type: partnerType,
+        bf_type: bfType,
+        outcome: outcome,
+        ab_variant: (window.HeartOpenAbVariant ? HeartOpenAbVariant.getVariant(CONCEPT_ID) : null),
+      });
+      if (window.HeartOpenHaptic) HeartOpenHaptic.medium();
+    }
+
+    // Stage 3 — SFX 토글 UI
+    function syncSfxToggleUi() {
+      const btn = $('btn-sfx');
+      if (!btn) return;
+      const on = !!(window.HeartOpenSfx && HeartOpenSfx.isEnabled());
+      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      btn.textContent = on ? '🔊' : '🔇';
+      btn.setAttribute('aria-label', on ? '사운드 끄기' : '사운드 켜기');
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+      syncSfxToggleUi();
+      const btn = $('btn-sfx');
+      if (btn) {
+        btn.addEventListener('click', () => {
+          if (!window.HeartOpenSfx) return;
+          const on = !HeartOpenSfx.isEnabled();
+          HeartOpenSfx.setEnabled(on);
+          syncSfxToggleUi();
+          if (on) HeartOpenSfx.playSfx('chime');
+        });
+      }
+      const opts = $('compare-options');
+      if (opts) {
+        opts.addEventListener('click', (e) => {
+          const t = e.target.closest('button[data-type]');
+          if (!t) return;
+          compareWithBoyfriend(t.dataset.type);
+        });
+      }
+    });
 
     $('btn-start').addEventListener('click', () => {
       if (window.HeartOpenAnalytics) {
@@ -232,6 +835,8 @@
     });
 
     $('btn-share').addEventListener('click', () => {
+      const v = (window.HeartOpenAbVariant ? HeartOpenAbVariant.getVariant(CONCEPT_ID) : null);
+      gtag('event', 'share', { concept_id: CONCEPT_ID, ab_variant: v });
       HeartOpenResultCard.shareResult({
         conceptId: CONCEPT_ID,
         title: 'Heart Open 짝꿍 유형 — ' + $('result-title').textContent,

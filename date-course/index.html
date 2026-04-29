@@ -28,6 +28,7 @@
   <script src="../_shared/share-caption.js" defer></script>
   <script src="../_shared/revisit-hook.js" defer></script>
   <script src="../_shared/stage2-engagement.js" defer></script>
+  <script src="../_shared/stage3-signature.js" defer></script>
   <style>
     .stage { padding-top: var(--space-6); text-align: center; }
     h1 { font-size: 22px; font-weight: 700; }
@@ -88,6 +89,124 @@
     .slide-in { animation: slideIn 0.3s ease-out; }
     @keyframes pop-in { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
     .pop-in { animation: pop-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+
+    /* Stage 3 — Signature ★ */
+    .result-card { position: relative; }
+    .sfx-toggle {
+      position: absolute; top: 12px; right: 12px;
+      width: 36px; height: 36px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.85);
+      border: 1px solid rgba(0,0,0,0.06);
+      box-shadow: var(--shadow-sm);
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 16px; line-height: 1;
+      z-index: 5;
+    }
+    .sfx-toggle[aria-pressed="true"] { background: var(--primary); color: #fff; }
+
+    /* Variant A — interactive course track with character pin */
+    .course-track {
+      position: relative;
+      margin-top: var(--space-4);
+      padding-top: 56px;
+    }
+    .character-pin {
+      position: absolute;
+      top: 0;
+      width: 48px; height: 48px;
+      left: calc(var(--progress, 0) * (100% - 48px));
+      transition: left 0.6s var(--ease-spring, cubic-bezier(0.34, 1.56, 0.64, 1));
+      z-index: 2;
+    }
+    .character-pin img { width: 100%; height: 100%; object-fit: contain; }
+    .character-pin.celebrate img { animation: char-pop 0.6s var(--ease-reveal, cubic-bezier(0.22, 1, 0.36, 1)); }
+    @keyframes char-pop { 0% { transform: scale(1); } 50% { transform: scale(1.25); } 100% { transform: scale(1); } }
+
+    .step-cards { display: flex; flex-direction: column; gap: var(--space-2); }
+    .step-card {
+      background: var(--surface-warm);
+      border: 2px solid transparent;
+      border-radius: var(--radius-md);
+      padding: var(--space-3) var(--space-4);
+      display: flex; align-items: center; gap: var(--space-3);
+      text-align: left;
+      opacity: 0.45;
+      transition: opacity 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
+    }
+    .step-card.active { opacity: 1; border-color: var(--primary); transform: scale(1.02); }
+    .step-card.done { opacity: 0.85; }
+    .step-card .step-num {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--primary); color: #fff; font-weight: 700; font-size: 13px;
+      display: inline-flex; align-items: center; justify-content: center; flex: 0 0 28px;
+    }
+    .step-card .step-text { font-size: 14px; line-height: 1.4; }
+    .step-line {
+      margin-top: var(--space-3);
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      min-height: 22px;
+    }
+    .next-step {
+      margin-top: var(--space-4);
+      width: 100%;
+      background: var(--primary);
+      color: #fff;
+      padding: 12px;
+      font-size: 14px;
+      font-weight: 700;
+      border-radius: var(--radius-pill);
+      box-shadow: var(--shadow-sm);
+    }
+    .next-step:active { transform: scale(0.98); }
+    .next-step:disabled { opacity: 0.5; }
+
+    .burst {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .burst .spark {
+      position: absolute;
+      font-size: 22px;
+      animation: burst-rise 1.2s ease-out forwards;
+    }
+    @keyframes burst-rise {
+      0%   { transform: translateY(0) scale(0.6); opacity: 0; }
+      30%  { opacity: 1; }
+      100% { transform: translateY(-80px) scale(1.2); opacity: 0; }
+    }
+
+    /* Variant B — detailed guide format, share-friendly */
+    .variant-b .course-track,
+    .variant-b .next-step,
+    .variant-b .step-line,
+    .variant-b .character-pin { display: none !important; }
+    .guide-list { display: flex; flex-direction: column; gap: var(--space-3); margin-top: var(--space-2); }
+    .guide-item {
+      background: var(--surface-warm);
+      border-left: 3px solid var(--primary);
+      border-radius: var(--radius-md);
+      padding: var(--space-3) var(--space-4);
+      text-align: left;
+    }
+    .guide-item .guide-head {
+      display: flex; align-items: center; gap: var(--space-2);
+      font-size: 13px; font-weight: 700; color: var(--primary-dark);
+      margin-bottom: var(--space-1);
+    }
+    .guide-item .guide-text { font-size: 14px; line-height: 1.5; color: var(--text-primary); }
+    .guide-item .guide-tip { font-size: 12px; color: var(--text-secondary); margin-top: var(--space-1); }
+
+    @media (prefers-reduced-motion: reduce) {
+      .character-pin { transition: none !important; }
+      .character-pin.celebrate { animation: none !important; }
+      .burst .spark { animation: none !important; opacity: 0 !important; }
+      .step-card { transition: none !important; }
+    }
   </style>
 </head>
 <body data-concept-id="date-course" data-concept-name="데이트 코스" data-revisit-hooks="partner,collection" data-share-hashtags="하트오픈데이트코스,이상적인데이트">
@@ -106,9 +225,22 @@
 
     <section id="screen-result" class="stage hidden">
       <div class="result-card pop-in" id="result-card" role="status" aria-live="polite" aria-atomic="true">
+        <button class="sfx-toggle" id="btn-sfx" type="button" aria-pressed="false" aria-label="사운드 켜기/끄기" title="사운드 토글">🔇</button>
         <img id="result-img" src="" alt="">
         <div class="result-title" id="result-title"></div>
-        <div class="course-list" id="course-list"></div>
+
+        <div class="course-track" id="course-track" aria-hidden="false">
+          <div class="character-pin" id="character-pin" style="--progress: 0">
+            <img id="character-img" src="" alt="">
+          </div>
+          <div class="step-cards" id="step-cards"></div>
+          <div class="step-line" id="step-line" aria-live="polite"></div>
+          <button class="next-step" id="btn-next-step" type="button">다음 코스 ▸</button>
+          <div class="burst hidden" id="burst" aria-hidden="true"></div>
+        </div>
+
+        <div class="guide-list hidden" id="guide-list"></div>
+
         <div class="result-desc" id="result-desc"></div>
         <div class="result-actions">
           <button class="btn-share" id="btn-share">공유</button>
@@ -178,6 +310,22 @@
       P: { name: '현실', file: 'practical.png' }
     };
 
+    // Stage 3 — ESARP × 3단계 라인 풀 (5 × 3 = 15)
+    const STEP_LINES = {
+      E: { 1: '오늘 진짜 기대돼 💭', 2: '이 순간 마음에 담자 💕', 3: '느낀 거 다 말해줘 ✨' },
+      S: { 1: '시작부터 신나 ✨',     2: '같이 있으니 더 즐거워 🎉', 3: '오늘 진짜 잘 놀았다 🎶' },
+      A: { 1: '편안하게 가자 🌙',     2: '포근한 시간이야 🤍',       3: '오늘 마음에 남았어 💗' },
+      R: { 1: '설레는 시작이야 🌸',   2: '이 순간 기억하자 ✨',      3: '오늘 진짜 특별해 💕' },
+      P: { 1: '차분히 하나씩 가자 🌱', 2: '계획대로 잘 흘러가네 ☕', 3: '오늘 알차게 보냈다 📝' }
+    };
+
+    // Stage 3 — Variant B (가이드 형식) 단계별 시간/팁 메타
+    const STEP_META = [
+      { time: '🕐 1단계',    tipPrefix: '💡 팁:', tipFallback: '도착 10분 전 메시지 보내면 더 설레 💕' },
+      { time: '🕒 2단계',    tipPrefix: '💡 팁:', tipFallback: '둘만의 사진 한 장은 꼭 남겨두기 📸' },
+      { time: '🕔 3단계',    tipPrefix: '💡 팁:', tipFallback: '집 가는 길까지가 데이트야 🌙' }
+    ];
+
     const $ = (id) => document.getElementById(id);
     let stepIdx = 0;
     const choices = {};
@@ -210,25 +358,177 @@
       });
     }
 
+    let currentCourse = null;
+    let currentEsarp = 'A';
+    let currentStep = 0; // 0..3 (0 = before step 1)
+    let currentVariant = 'A';
+
     function showResult() {
       const key = choices.time + '-' + choices.mood + '-' + choices.activity;
       const course = COURSES[key] || FALLBACK;
       const t = TYPES[course.type];
+      currentCourse = course;
+      currentEsarp = course.type;
+      currentStep = 0;
+
       $('result-img').src = '../assets/characters/' + t.file;
       $('result-img').alt = t.name + ' 코스';
       $('result-title').textContent = course.title;
-      const list = $('course-list');
-      list.innerHTML = '';
+      $('result-desc').textContent = course.desc;
+
+      // Stage 3 — A/B variant 부여 (1회 ab_assigned 발사)
+      currentVariant = (window.HeartOpenAbVariant
+        ? HeartOpenAbVariant.assignVariant(CONCEPT_ID)
+        : 'A');
+      const card = $('result-card');
+      card.classList.toggle('variant-b', currentVariant === 'B');
+
+      if (currentVariant === 'B') {
+        renderVariantB(course);
+      } else {
+        renderVariantA(course, t);
+      }
+
+      gtag('event', 'course_result', {
+        concept_id: CONCEPT_ID,
+        course_key: key,
+        esarp: course.type,
+        ab_variant: currentVariant
+      });
+      if (window.HeartOpenAnalytics) HeartOpenAnalytics.trackResultView(CONCEPT_ID, course.type);
+      // Stage 3 — reveal SFX (토글 ON 일 때만)
+      if (window.HeartOpenSfx) HeartOpenSfx.playSfx('reveal');
+      showOnly('screen-result');
+    }
+
+    function renderVariantA(course, t) {
+      $('course-track').classList.remove('hidden');
+      $('guide-list').classList.add('hidden');
+
+      // 캐릭터 핀 이미지
+      $('character-img').src = '../assets/characters/' + t.file;
+      $('character-img').alt = t.name + ' 캐릭터';
+
+      // 카드 렌더 — opacity-dim, 첫 카드만 active
+      const sc = $('step-cards');
+      sc.innerHTML = '';
       course.steps.forEach((s, i) => {
         const row = document.createElement('div');
-        row.className = 'course-step';
+        row.className = 'step-card' + (i === 0 ? ' active' : '');
+        row.setAttribute('role', 'listitem');
+        row.dataset.step = String(i + 1);
         row.innerHTML = '<span class="step-num">' + (i + 1) + '</span><span class="step-text">' + s + '</span>';
-        list.appendChild(row);
+        sc.appendChild(row);
       });
-      $('result-desc').textContent = course.desc;
-      gtag('event', 'course_result', { concept_id: CONCEPT_ID, course_key: key, esarp: course.type });
-      if (window.HeartOpenAnalytics) HeartOpenAnalytics.trackResultView(CONCEPT_ID, course.type);
-      showOnly('screen-result');
+
+      // 캐릭터 핀 progress 0 으로 리셋
+      currentStep = 0;
+      const pin = $('character-pin');
+      pin.style.setProperty('--progress', '0');
+      pin.classList.remove('celebrate');
+
+      // 첫 라인
+      $('step-line').textContent = (STEP_LINES[currentEsarp] && STEP_LINES[currentEsarp][1]) || '';
+
+      // 다음 버튼 리셋
+      const btn = $('btn-next-step');
+      btn.disabled = false;
+      btn.textContent = '다음 코스 ▸';
+
+      $('burst').classList.add('hidden');
+      $('burst').innerHTML = '';
+    }
+
+    function renderVariantB(course) {
+      $('course-track').classList.add('hidden');
+      $('guide-list').classList.remove('hidden');
+
+      const gl = $('guide-list');
+      gl.innerHTML = '';
+      const lines = STEP_LINES[currentEsarp] || STEP_LINES.A;
+      course.steps.forEach((s, i) => {
+        const meta = STEP_META[i] || { time: ('🕐 ' + (i + 1) + '단계'), tipPrefix: '💡 팁:', tipFallback: '' };
+        const item = document.createElement('div');
+        item.className = 'guide-item';
+        item.setAttribute('role', 'listitem');
+        const tip = lines[i + 1] || meta.tipFallback || '';
+        item.innerHTML =
+          '<div class="guide-head">' + meta.time + '</div>' +
+          '<div class="guide-text">' + s + '</div>' +
+          (tip ? ('<div class="guide-tip">' + meta.tipPrefix + ' ' + tip + '</div>') : '');
+        gl.appendChild(item);
+      });
+    }
+
+    function advanceStep() {
+      if (currentVariant !== 'A' || !currentCourse) return;
+      const total = currentCourse.steps.length;
+      if (currentStep >= total) return;
+
+      currentStep++;
+      const pin = $('character-pin');
+      // 0..(total-1) 매핑 — total=3 → 0, 0.5, 1.0
+      const progress = (currentStep - 1) / Math.max(1, total - 1);
+      pin.style.setProperty('--progress', String(progress));
+
+      // 카드 active/done 토글
+      const cards = document.querySelectorAll('.step-card');
+      cards.forEach((c, i) => {
+        c.classList.remove('active');
+        if (i + 1 < currentStep) c.classList.add('done');
+        else c.classList.remove('done');
+        if (i + 1 === currentStep) c.classList.add('active');
+      });
+
+      // 단계별 ESARP 라인
+      const lines = STEP_LINES[currentEsarp] || STEP_LINES.A;
+      $('step-line').textContent = lines[currentStep] || '';
+
+      // SFX + 햅틱
+      if (window.HeartOpenSfx) HeartOpenSfx.playSfx('chime');
+      if (window.HeartOpenHaptic) HeartOpenHaptic.medium();
+      else if (navigator.vibrate) { try { navigator.vibrate(40); } catch (_) {} }
+
+      gtag('event', 'date_course_step_advance', {
+        concept_id: CONCEPT_ID,
+        step: currentStep,
+        ab_variant: currentVariant
+      });
+
+      const btn = $('btn-next-step');
+      if (currentStep >= total) {
+        btn.disabled = true;
+        btn.textContent = '코스 완료 ✨';
+        celebrateFinal();
+      } else {
+        btn.textContent = '다음 코스 ▸';
+      }
+    }
+
+    function celebrateFinal() {
+      const reduced = (window.HeartOpenMotion && window.HeartOpenMotion.reduced);
+      const pin = $('character-pin');
+      if (!reduced) pin.classList.add('celebrate');
+
+      if (window.HeartOpenSfx) HeartOpenSfx.playSfx('reveal');
+      if (window.HeartOpenHaptic) HeartOpenHaptic.reveal();
+      else if (navigator.vibrate) { try { navigator.vibrate([60, 30, 60, 30, 200]); } catch (_) {} }
+
+      if (reduced) return;
+      const burst = $('burst');
+      burst.classList.remove('hidden');
+      burst.innerHTML = '';
+      const sparks = ['✨','💕','🌸','💖','⭐'];
+      for (let i = 0; i < 6; i++) {
+        const s = document.createElement('span');
+        s.className = 'spark';
+        s.textContent = sparks[i % sparks.length];
+        s.style.left = (10 + Math.random() * 80) + '%';
+        s.style.top  = (40 + Math.random() * 40) + '%';
+        s.style.animationDelay = (Math.random() * 0.3) + 's';
+        burst.appendChild(s);
+      }
+      setTimeout(() => { burst.classList.add('hidden'); burst.innerHTML = ''; }, 1500);
     }
 
     $('btn-start').addEventListener('click', () => {
@@ -243,6 +543,8 @@
     });
 
     $('btn-share').addEventListener('click', () => {
+      const v = (window.HeartOpenAbVariant ? HeartOpenAbVariant.getVariant(CONCEPT_ID) : null);
+      gtag('event', 'share', { concept_id: CONCEPT_ID, ab_variant: v });
       HeartOpenResultCard.shareResult({
         conceptId: CONCEPT_ID,
         title: 'Heart Open 데이트 코스 — ' + $('result-title').textContent,
@@ -254,6 +556,32 @@
       if (window.HeartOpenAnalytics) HeartOpenAnalytics.trackCtaClick(CONCEPT_ID, 'app_store');
     });
     $('btn-restart').addEventListener('click', () => showOnly('screen-intro'));
+
+    // Stage 3 — 다음 코스 버튼
+    $('btn-next-step').addEventListener('click', advanceStep);
+
+    // Stage 3 — SFX 토글 (기본 OFF, 사용자 동의 후 ON)
+    function syncSfxToggleUi() {
+      const btn = $('btn-sfx');
+      if (!btn) return;
+      const on = !!(window.HeartOpenSfx && HeartOpenSfx.isEnabled());
+      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      btn.textContent = on ? '🔊' : '🔇';
+      btn.setAttribute('aria-label', on ? '사운드 끄기' : '사운드 켜기');
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+      syncSfxToggleUi();
+      const btn = $('btn-sfx');
+      if (btn) {
+        btn.addEventListener('click', () => {
+          if (!window.HeartOpenSfx) return;
+          const on = !HeartOpenSfx.isEnabled();
+          HeartOpenSfx.setEnabled(on);
+          syncSfxToggleUi();
+          if (on) HeartOpenSfx.playSfx('chime');
+        });
+      }
+    });
   </script>
 </body>
 </html>
