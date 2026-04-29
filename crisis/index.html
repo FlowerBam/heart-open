@@ -2,61 +2,64 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#FF6B9D">
-  <meta name="description" content="잠깐의 위기인지 진짜 안 맞는 건지. 5가지 성향으로 갈등의 원인을 객관적으로 진단합니다.">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#FF6F91">
+  <meta name="description" content="권태기인지 바쁜 건지 헷갈릴 때. ESARP 연애 성향.">
 
-  <meta property="og:title" content="우리 관계, 회복할 수 있을까?">
-  <meta property="og:description" content="잠깐의 위기인지 진짜 안 맞는 건지. 5가지 성향으로 객관적으로 봐요.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="요즘 우리, 뭔가 좀 멀어진 것 같다면...">
+  <meta property="og:description" content="권태기인지 바쁜 건지 헷갈릴 때. ESARP 연애 성향.">
   <meta property="og:image" content="https://flowerbam.github.io/heart-open/assets/og-crisis.png">
   <meta property="og:url" content="https://flowerbam.github.io/heart-open/crisis/">
-  <meta property="og:type" content="website">
   <meta property="og:locale" content="ko_KR">
+  <meta name="twitter:card" content="summary_large_image">
 
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@latest/dist/web/static/pretendard.min.css">
 
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-2NYTV5FKDC"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
-    gtag('config', 'G-XXXXXXXXXX', {
-      'page_title': 'Heart Open - Crisis',
-      'page_path': '/crisis/'
+    gtag('config', 'G-2NYTV5FKDC', {
+      'page_title': 'Crisis',
+      'page_path': '/heart-open/crisis/'
     });
     gtag('set', 'user_properties', {
       'landing_segment': 'crisis'
     });
   </script>
 
-  <title>우리 관계, 회복할 수 있을까? - Heart Open</title>
+  <title>요즘 우리, 뭔가 좀 멀어진 것 같다면... - Heart Open</title>
 
   <style>
-    *,*::before,*::after{box-sizing:border-box}
-    html,body{margin:0;padding:0}
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
     :root{
-      --brand:#FF6B9D;
-      --brand-pressed:#E55A88;
-      --text:#1a1a1a;
-      --text-muted:#555;
-      --bg:#ffffff;
-      --card:#fafafa;
-      --border:#eee;
+      --primary:#FF6F91;
+      --primary-light:#FFB3C6;
+      --primary-dark:#D94F78;
+      --accent:#C3B1E1;
+      --accent-surface:#F4EEFF;
+      --bg:#FFF9F7;
+      --surface-warm:#FFF0EC;
+      --card:#FFFFFF;
+      --text-primary:#1A1A1A;
+      --text-secondary:#6B6B6B;
+      --success:#82C09A;
     }
     @media (prefers-color-scheme: dark){
       :root{
-        --text:#f5f5f7;
-        --text-muted:#bbb;
-        --bg:#0f0f10;
-        --card:#1a1a1c;
-        --border:#2a2a2c;
+        --bg:#1A1A1A;
+        --card:#2A2A2A;
+        --text-primary:#F5F5F5;
+        --text-secondary:#A0A0A0;
       }
     }
     body{
       font-family:'Pretendard',-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
-      color:var(--text);
       background:var(--bg);
+      color:var(--text-primary);
       line-height:1.6;
       -webkit-font-smoothing:antialiased;
       -webkit-text-size-adjust:100%;
@@ -66,122 +69,138 @@
       margin:0 auto;
       padding:24px;
     }
-    @media (min-width:768px){
-      .container{padding:40px}
-    }
     .hero{
       min-height:80vh;
       display:flex;
       flex-direction:column;
       justify-content:center;
-      animation:fadeIn .5s ease-out;
+      text-align:center;
+      padding:40px 0;
     }
-    @keyframes fadeIn{
-      from{opacity:0;transform:translateY(8px)}
-      to{opacity:1;transform:none}
-    }
-    h1{
+    .hero h1{
       font-size:28px;
       font-weight:700;
-      line-height:1.35;
-      margin:0 0 16px;
-      letter-spacing:-.02em;
+      letter-spacing:-0.4px;
+      line-height:1.4;
+      margin-bottom:16px;
     }
-    .sub{
+    .hero p{
       font-size:16px;
-      color:var(--text-muted);
-      margin:0 0 32px;
+      color:var(--text-secondary);
+      line-height:1.7;
+      margin-bottom:32px;
     }
-    @media (min-width:768px){
-      h1{font-size:36px}
-      .sub{font-size:18px}
+    @media (min-width:600px){
+      .hero h1{font-size:36px}
+      .hero p{font-size:18px}
     }
     .cta-button{
-      display:block;
-      width:100%;
-      min-height:56px;
-      padding:16px 32px;
-      font-size:18px;
-      font-weight:600;
-      font-family:inherit;
+      background:var(--primary);
       color:#fff;
-      background:var(--brand);
       border:none;
-      border-radius:12px;
+      padding:18px 40px;
+      font-size:18px;
+      font-weight:700;
+      border-radius:14px;
       cursor:pointer;
-      transition:background .15s ease, transform .1s ease;
+      min-height:56px;
+      width:100%;
+      max-width:320px;
+      margin:0 auto;
+      display:block;
+      font-family:inherit;
+      transition:all 0.2s ease;
+      box-shadow:0 4px 14px rgba(255,111,145,0.3);
       -webkit-tap-highlight-color:transparent;
     }
-    .cta-button:hover{background:var(--brand-pressed)}
-    .cta-button:active{background:var(--brand-pressed);transform:scale(.99)}
-    .proof{
-      margin-top:48px;
-      display:grid;
-      gap:12px;
-    }
-    .proof-item{
-      padding:16px 20px;
+    .cta-button:hover{background:var(--primary-dark);transform:translateY(-2px)}
+    .cta-button:active{transform:translateY(0)}
+    .evidence{padding:40px 0}
+    .evidence-card{
       background:var(--card);
-      border:1px solid var(--border);
-      border-radius:12px;
-      font-size:16px;
-      display:flex;
-      align-items:center;
-      gap:12px;
+      border-radius:16px;
+      padding:24px;
+      margin-bottom:16px;
+      box-shadow:0 2px 8px rgba(0,0,0,0.04);
     }
-    .proof-item::before{
-      content:"";
-      flex:0 0 8px;
-      width:8px;height:8px;
-      border-radius:50%;
-      background:var(--brand);
+    .evidence-card .icon{font-size:32px;margin-bottom:12px}
+    .evidence-card h3{
+      font-size:18px;
+      font-weight:600;
+      margin-bottom:8px;
+      color:var(--text-primary);
     }
-    .price{
-      margin-top:32px;
-      padding:20px;
-      background:var(--card);
-      border:1px solid var(--border);
-      border-radius:12px;
+    .evidence-card p{
+      font-size:15px;
+      color:var(--text-secondary);
+      line-height:1.6;
+    }
+    .pricing{
       text-align:center;
+      padding:24px 0;
+      color:var(--text-secondary);
+      font-size:14px;
     }
-    .price strong{font-weight:600}
-    .price .free{color:var(--brand);font-weight:700}
-    .price small{display:block;margin-top:6px;color:var(--text-muted);font-size:14px}
-    footer{
-      margin-top:48px;
-      padding-top:24px;
-      border-top:1px solid var(--border);
+    .footer{
       text-align:center;
-      color:var(--text-muted);
+      padding:40px 0 24px;
+      color:var(--text-secondary);
       font-size:13px;
+    }
+    .footer a{
+      color:var(--text-secondary);
+      text-decoration:none;
+      margin:0 8px;
+    }
+    .fade-in{animation:fadeIn 0.6s ease-out}
+    @keyframes fadeIn{
+      from{opacity:0;transform:translateY(10px)}
+      to{opacity:1;transform:translateY(0)}
     }
   </style>
 </head>
 <body>
-  <main class="container">
-    <section class="hero">
-      <h1>우리 관계,<br>회복할 수 있을까?</h1>
-      <p class="sub">잠깐의 위기인지 진짜 안 맞는 건지.<br>5가지 성향으로 객관적으로 봐요.</p>
-      <button type="button" class="cta-button" onclick="trackAndDownload()" aria-label="앱 받고 객관적으로 보기">
-        객관적으로 보기
-      </button>
+  <div class="container">
+    <section class="hero fade-in">
+      <h1>요즘 우리, 뭔가 좀 멀어진 것 같다면...</h1>
+      <p>권태기인지, 그냥 바쁜 건지 헷갈릴 때.<br>1분이면 우리 둘의 진짜를 봐요.</p>
+      <button class="cta-button" onclick="trackAndDownload()">우리 다시 보기</button>
+    </section>
 
-      <div class="proof" aria-label="앱 특징">
-        <div class="proof-item">갈등의 진짜 원인 진단</div>
-        <div class="proof-item">두 사람 가치관 차이 분석</div>
-        <div class="proof-item">회복 가능성 객관적 평가</div>
+    <section class="evidence">
+      <div class="evidence-card">
+        <div class="icon">🌱</div>
+        <h3>객관적인 우리 모습</h3>
+        <p>감정에 휘둘리지 않고 차분하게 봐요.</p>
       </div>
-
-      <div class="price">
-        <strong class="free">기본 분석 무료</strong>
-        <small>심층 분석 1,900원 (단발 결제)</small>
+      <div class="evidence-card">
+        <div class="icon">💕</div>
+        <h3>둘이 답하면 보이는 것</h3>
+        <p>혼자 생각만 하지 말고. 같이 답해보면 달라요.</p>
+      </div>
+      <div class="evidence-card">
+        <div class="icon">✨</div>
+        <h3>ESARP 5가지 유형</h3>
+        <p>갈등의 진짜 원인이 보일 수도 있어요.</p>
       </div>
     </section>
 
-    <footer>
-      © Heart Open
+    <section class="pricing">
+      <p>기본은 무료. 더 깊이 있는 궁합은 1,900원</p>
+    </section>
+
+    <section style="text-align:center;padding:24px 0;">
+      <button class="cta-button" onclick="trackAndDownload()">우리 다시 보기</button>
+    </section>
+
+    <footer class="footer">
+      <p>Heart Open · 1년 동안 혼자 만든 커플 앱</p>
+      <div style="margin-top:12px;">
+        <a href="/heart-open/privacy">개인정보 처리방침</a> ·
+        <a href="mailto:contact@heartopen.app">문의</a>
+      </div>
     </footer>
-  </main>
+  </div>
 
   <script>
     function trackAndDownload(){
@@ -193,9 +212,9 @@
           'destination':platform==='ios'?'app_store':'play_store'
         });
       }catch(e){}
-      var utm='utm_source=threads&utm_medium=landing&utm_campaign=segment_test_v1&utm_content='+segment;
+      var utm='utm_source=threads&utm_medium=landing&utm_campaign=segment_test_v1&utm_content=landing_'+segment;
       var url=platform==='ios'
-        ? 'https://apps.apple.com/app/[APP_ID]?'+utm
+        ? 'https://apps.apple.com/app/id[APP_STORE_ID]?'+utm
         : 'https://play.google.com/store/apps/details?id=com.heartopen&referrer='+encodeURIComponent(utm);
       setTimeout(function(){window.location.href=url;},100);
     }
