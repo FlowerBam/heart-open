@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>갈등 분기 — Heart Open</title>
+  <meta name="description" content="내 선택이 어떤 결말을 만들지 시뮬해봐 🌱">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+  <link rel="stylesheet" href="../shared/tokens.css">
+  <link rel="stylesheet" href="../shared/result-card.css">
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-2NYTV5FKDC"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){ dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'G-2NYTV5FKDC');
+  </script>
+  <script src="../shared/analytics.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
+  <script src="../shared/result-card.js" defer></script>
+  <style>
+    .stage { padding-top: var(--space-6); text-align: center; }
+    h1 { font-size: 22px; font-weight: 700; line-height: 1.4; }
+    .lead { color: var(--text-secondary); font-size: 14px; margin-top: var(--space-2); line-height: 1.6; }
+    .start, .cta-restart {
+      margin-top: var(--space-6); width: 100%;
+      background: var(--primary); color: #fff;
+      padding: 16px; font-size: 16px; font-weight: 700;
+      border-radius: var(--radius-pill);
+      box-shadow: var(--shadow-md);
+    }
+    .scn-list { display: grid; gap: var(--space-3); margin-top: var(--space-6); }
+    .scn-card {
+      background: var(--card);
+      border-radius: var(--radius-md);
+      padding: var(--space-4) var(--space-5);
+      box-shadow: var(--shadow-sm);
+      text-align: left;
+    }
+    .scn-card .t { font-weight: 700; font-size: 15px; }
+    .scn-card .s { font-size: 12px; color: var(--text-secondary); margin-top: 4px; line-height: 1.5; }
+    .scn-card:active { transform: scale(0.98); }
+
+    .step {
+      margin-top: var(--space-5);
+      background: var(--card);
+      border-radius: var(--radius-lg);
+      padding: var(--space-5);
+      box-shadow: var(--shadow-sm);
+      text-align: left;
+    }
+    .step .label { font-size: 12px; color: var(--primary-dark); font-weight: 700; }
+    .step .text { font-size: 16px; font-weight: 700; margin-top: 6px; line-height: 1.5; }
+    .opts { display: grid; gap: var(--space-2); margin-top: var(--space-4); }
+    .opt {
+      background: var(--surface-warm);
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+      font-size: 15px; font-weight: 600;
+      color: var(--text-primary);
+      text-align: left;
+    }
+    .opt:active { transform: scale(0.98); }
+
+    .tag {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
+      font-size: 12px; font-weight: 700;
+    }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <section id="screen-intro" class="stage">
+      <h1>갈등 분기 시뮬 🌱</h1>
+      <p class="lead">실제 갈등 상황에서 내 선택이<br>어떤 결말을 만드는지 따라가봐</p>
+      <div class="scn-list" id="scn-list"></div>
+    </section>
+
+    <section id="screen-step" class="stage hidden">
+      <div class="step">
+        <div class="label" id="step-label"></div>
+        <div class="text" id="step-text"></div>
+        <div class="opts" id="step-opts"></div>
+      </div>
+    </section>
+
+    <section id="screen-result" class="stage hidden">
+      <div class="result-card" id="result-card">
+        <img id="result-img" src="" alt="">
+        <div class="result-title" id="result-title"></div>
+        <div class="result-desc" id="result-desc"></div>
+        <span class="tag" id="result-tag" style="background:var(--surface-warm);color:var(--primary-dark);"></span>
+        <div class="result-actions">
+          <button class="btn-share" id="btn-share">공유</button>
+          <button class="btn-save" id="btn-save">저장</button>
+        </div>
+        <a class="btn-cta" id="btn-cta" href="https://heartopen.app">앱에서 더 깊은 가이드 →</a>
+      </div>
+      <button class="cta-restart" id="btn-retry" style="background:transparent;color:var(--primary-dark);box-shadow:none;text-decoration:underline;">다른 결말 찾아보기</button>
+      <button class="cta-restart" id="btn-back" style="background:transparent;color:var(--text-secondary);box-shadow:none;">시나리오 다시 고르기</button>
+    </section>
+  </div>
+
+  <script>
+    const CONCEPT_ID = '18';
+    const CONCEPT_NAME = 'conflict_branch';
+
+    const OUTCOMES = {
+      good:    { title: '💕 따뜻한 화해',     desc: '공감으로 다가갔더니 서로 마음을 열었어. 더 가까워졌어.', char: 'emotion.png',     esarp: 'E', tag: '좋은 결말' },
+      great:   { title: '🎉 최고의 결말',     desc: '솔직함과 타이밍이 둘 다 잘 맞았어. 둘 다 한 뼘 자랐어.', char: 'romantic.png',    esarp: 'R', tag: '최고의 결말' },
+      neutral: { title: '🌙 조심스러운 화해', desc: '어색함은 남았지만 대화가 다시 시작됐어. 시간이 좀 더 필요해.', char: 'attachment.png', esarp: 'A', tag: '평화로운 결말' },
+      bad:     { title: '🌿 다시 해볼까',     desc: '말이 살짝 부딪쳤어. 다른 선택지로 다시 가볼래?',         char: 'practical.png',   esarp: 'P', tag: '다시 해보기' }
+    };
+
+    const SCENARIOS = [
+      {
+        id: 'silent',
+        title: '남친이 갑자기 말이 없어졌을 때',
+        setup: '연락이 줄고 답장이 늦어지고 있어. 왜 그런지 모르겠어.',
+        b1: {
+          text: '어떻게 할까?',
+          a: { label: '먼저 연락해서 물어볼래', next: 'b2a' },
+          b: { label: '상대가 연락할 때까지 기다릴래', next: 'b2b' }
+        },
+        b2a: {
+          text: '남친이 "요즘 좀 힘들어"라고 했어. 어떻게 답할까?',
+          a: { label: '"무슨 일 있어? 나한테 말해줘"', outcome: 'good' },
+          b: { label: '"나도 힘든데 너만 힘드냐"', outcome: 'bad' }
+        },
+        b2b: {
+          text: '3일 뒤 남친에게서 연락이 왔어. 어떻게 답할까?',
+          a: { label: '"보고싶었어"', outcome: 'great' },
+          b: { label: '"왜 이제야 연락해"', outcome: 'neutral' }
+        }
+      },
+      {
+        id: 'anniv',
+        title: '기념일을 깜빡한 걸 들켰을 때',
+        setup: '오늘이 100일인 걸 남친이 깜빡했어. 살짝 서운해.',
+        b1: {
+          text: '먼저 어떻게 반응할까?',
+          a: { label: '"나 좀 서운했어"라고 솔직히 말해', next: 'b2a' },
+          b: { label: '"괜찮아"라고 일단 넘겨', next: 'b2b' }
+        },
+        b2a: {
+          text: '남친이 미안해하면서 "어떻게 만회할까?" 물어봐',
+          a: { label: '"오늘 저녁 같이 보내고 싶어"', outcome: 'good' },
+          b: { label: '"알아서 해봐"', outcome: 'bad' }
+        },
+        b2b: {
+          text: '하루 지나도 마음이 풀리지 않아. 어떻게 할까?',
+          a: { label: '"사실 좀 서운했어"라고 뒤늦게 말해', outcome: 'neutral' },
+          b: { label: '계속 묻어두기', outcome: 'bad' }
+        }
+      },
+      {
+        id: 'priority',
+        title: '친구 약속과 우선순위가 부딪칠 때',
+        setup: '이번 주말 데이트 약속이 있었는데, 친구가 "꼭 와줘" 했어.',
+        b1: {
+          text: '먼저 어떻게 할까?',
+          a: { label: '남친에게 미리 솔직하게 말해', next: 'b2a' },
+          b: { label: '일단 친구 약속 잡고 나중에 통보', next: 'b2b' }
+        },
+        b2a: {
+          text: '남친이 "그럼 다음 주에 우리 시간 따로 잡자"고 해',
+          a: { label: '"고마워, 다음 주는 진짜 우리만"', outcome: 'great' },
+          b: { label: '"또 미루는 거야?"', outcome: 'bad' }
+        },
+        b2b: {
+          text: '남친이 살짝 시무룩해진 게 느껴져',
+          a: { label: '"늦었지만 미안, 다음에 보상할게"', outcome: 'neutral' },
+          b: { label: '"내 친구가 더 중요해"', outcome: 'bad' }
+        }
+      }
+    ];
+
+    const $ = (id) => document.getElementById(id);
+    let curScn = null;
+    let attempts = {};
+
+    function showOnly(id) {
+      ['screen-intro','screen-step','screen-result']
+        .forEach(s => $(s).classList.toggle('hidden', s !== id));
+    }
+    function renderList() {
+      const list = $('scn-list');
+      list.innerHTML = '';
+      SCENARIOS.forEach(s => {
+        const c = document.createElement('button');
+        c.className = 'scn-card';
+        c.innerHTML = `<div class="t">${s.title}</div><div class="s">${s.setup}</div>`;
+        c.addEventListener('click', () => startScn(s));
+        list.appendChild(c);
+      });
+    }
+    function startScn(s) {
+      curScn = s;
+      attempts[s.id] = (attempts[s.id] || 0) + 1;
+      gtag('event', 'scenario_start', { concept_id: CONCEPT_ID, scenario_id: s.id });
+      showOnly('screen-step');
+      renderStep('b1');
+    }
+    function renderStep(key) {
+      const node = curScn[key];
+      $('step-label').textContent = key === 'b1' ? '분기 1' : '분기 2';
+      $('step-text').textContent = node.text;
+      const opts = $('step-opts');
+      opts.innerHTML = '';
+      ['a','b'].forEach(letter => {
+        const opt = node[letter];
+        const b = document.createElement('button');
+        b.className = 'opt';
+        b.textContent = opt.label;
+        b.addEventListener('click', () => {
+          gtag('event', 'branch_choice', { concept_id: CONCEPT_ID, branch: key, choice: letter });
+          if (opt.next) renderStep(opt.next);
+          else finish(opt.outcome);
+        });
+        opts.appendChild(b);
+      });
+    }
+    function finish(outcomeKey) {
+      const o = OUTCOMES[outcomeKey];
+      $('result-img').src = '../assets/characters/' + o.char;
+      $('result-img').alt = o.title;
+      $('result-title').textContent = o.title;
+      $('result-desc').textContent = o.desc;
+      $('result-tag').textContent = o.tag;
+      gtag('event', 'outcome_reached', { concept_id: CONCEPT_ID, outcome: outcomeKey, scenario: curScn.id, attempt: attempts[curScn.id] });
+      gtag('event', 'retry', { concept_id: CONCEPT_ID, attempt: attempts[curScn.id] });
+      if (window.HeartOpenAnalytics) HeartOpenAnalytics.trackResultView(CONCEPT_ID, outcomeKey);
+      showOnly('screen-result');
+    }
+
+    $('btn-retry').addEventListener('click', () => { if (curScn) startScn(curScn); });
+    $('btn-back').addEventListener('click', () => showOnly('screen-intro'));
+    $('btn-share').addEventListener('click', () => {
+      HeartOpenResultCard.shareResult({
+        conceptId: CONCEPT_ID,
+        title: 'Heart Open 갈등 분기 — ' + $('result-title').textContent,
+        url: location.href
+      });
+    });
+    $('btn-save').addEventListener('click', () => HeartOpenResultCard.saveResult('#result-card'));
+    $('btn-cta').addEventListener('click', () => {
+      if (window.HeartOpenAnalytics) HeartOpenAnalytics.trackCtaClick(CONCEPT_ID, 'app_store');
+    });
+
+    if (window.HeartOpenAnalytics) {
+      HeartOpenAnalytics.trackPageView(CONCEPT_ID, CONCEPT_NAME);
+      HeartOpenAnalytics.trackGameStart(CONCEPT_ID, CONCEPT_NAME);
+    }
+    renderList();
+  </script>
+</body>
+</html>

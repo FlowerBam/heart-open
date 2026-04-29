@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>우리 패턴 보기 — Heart Open</title>
+  <meta name="description" content="우리 사이의 갈등 패턴을 5문제로 살펴봐 🔍">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+  <link rel="stylesheet" href="../shared/tokens.css">
+  <link rel="stylesheet" href="../shared/result-card.css">
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-2NYTV5FKDC"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){ dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'G-2NYTV5FKDC');
+  </script>
+  <script src="../shared/analytics.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
+  <script src="../shared/result-card.js" defer></script>
+  <style>
+    .stage { padding-top: var(--space-6); text-align: center; }
+    h1 { font-size: 22px; font-weight: 700; line-height: 1.4; }
+    .lead { color: var(--text-secondary); font-size: 14px; margin-top: var(--space-2); line-height: 1.6; }
+    .start, .cta-restart {
+      margin-top: var(--space-6); width: 100%;
+      background: var(--primary); color: #fff;
+      padding: 16px; font-size: 16px; font-weight: 700;
+      border-radius: var(--radius-pill);
+      box-shadow: var(--shadow-md);
+    }
+    .progress-dots {
+      display: flex; gap: 6px; justify-content: center; margin-top: var(--space-4);
+    }
+    .progress-dots .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--accent-surface);
+    }
+    .progress-dots .dot.on { background: var(--primary); }
+
+    .qcard {
+      margin-top: var(--space-6);
+      background: var(--card);
+      border-radius: var(--radius-lg);
+      padding: var(--space-6) var(--space-5);
+      box-shadow: var(--shadow-sm);
+    }
+    .qtext { font-size: 16px; font-weight: 700; line-height: 1.55; }
+    .opts { display: grid; gap: var(--space-2); margin-top: var(--space-5); }
+    .opt {
+      background: var(--surface-warm);
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+      font-size: 15px; font-weight: 600;
+      color: var(--text-primary);
+      text-align: center;
+    }
+    .opt:active { transform: scale(0.98); }
+
+    .loading {
+      margin-top: var(--space-10);
+      font-size: 15px;
+      color: var(--text-secondary);
+      min-height: 60px;
+    }
+    .loading-dots::after {
+      content: '...';
+      animation: blink 1s infinite;
+    }
+    @keyframes blink { 0%,50% { opacity: 1; } 51%,100% { opacity: 0.2; } }
+
+    .tip-card {
+      margin-top: var(--space-4);
+      background: var(--accent-surface);
+      border-radius: var(--radius-md);
+      padding: var(--space-4) var(--space-5);
+      font-size: 14px;
+      color: var(--primary-dark);
+      line-height: 1.6;
+    }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <section id="screen-intro" class="stage">
+      <h1>우리 패턴 보기 🔍</h1>
+      <p class="lead">우리 사이에서 자주 일어나는 일들...<br>5문제만 솔직하게 체크해봐</p>
+      <button class="start" id="btn-start">시작하기</button>
+    </section>
+
+    <section id="screen-q" class="stage hidden">
+      <div class="progress-dots" id="dots"></div>
+      <div class="qcard">
+        <div class="qtext" id="qtext"></div>
+        <div class="opts" id="opts"></div>
+      </div>
+    </section>
+
+    <section id="screen-loading" class="stage hidden">
+      <h1>패턴 살피는 중 ✨</h1>
+      <p class="loading loading-dots" id="loading-text">답변 패턴 보고 있어</p>
+    </section>
+
+    <section id="screen-result" class="stage hidden">
+      <div class="result-card" id="result-card">
+        <img id="result-img" src="" alt="">
+        <div class="result-title" id="result-title"></div>
+        <div class="result-desc" id="result-desc"></div>
+        <div class="tip-card" id="tip-card"></div>
+        <div class="result-actions">
+          <button class="btn-share" id="btn-share">공유</button>
+          <button class="btn-save" id="btn-save">저장</button>
+        </div>
+        <a class="btn-cta" id="btn-cta" href="https://heartopen.app">앱에서 우리 패턴 깊게 보기 →</a>
+      </div>
+      <button class="cta-restart" id="btn-restart" style="background:transparent;color:var(--text-secondary);box-shadow:none;">다시 해보기</button>
+    </section>
+  </div>
+
+  <script>
+    const CONCEPT_ID = '15';
+    const CONCEPT_NAME = 'pattern_analysis';
+
+    const PATTERNS = [
+      { text: '남친이 말 없이 조용해지면 더 불안해져',           esarp: 'A' },
+      { text: '갈등이 생기면 내 감정을 바로 표현하는 편이야',     esarp: 'E' },
+      { text: '싸우면 혼자서 해결책부터 먼저 생각해봐',           esarp: 'P' },
+      { text: '분위기가 안 좋아지면 농담으로 풀려고 해',          esarp: 'S' },
+      { text: '화해할 때 작은 이벤트나 선물이 있으면 좋아',       esarp: 'R' }
+    ];
+    const OPTIONS = [
+      { label: '자주 있어', score: 3 },
+      { label: '가끔 있어', score: 2 },
+      { label: '없어',       score: 1 }
+    ];
+
+    const TYPES = {
+      A: {
+        name: '안정 추구형',
+        char: 'attachment.png',
+        desc: '불안할 때 확인이 필요한 결이야. 솔직하게 "나 지금 좀 불안해"라고 말해봐.',
+        tip: '안심을 요청하는 건 약한 게 아니야 — 솔직함이 신뢰를 만들어 🌙'
+      },
+      E: {
+        name: '감정 표현형',
+        char: 'emotion.png',
+        desc: '감정이 먼저 올라오는 결이야. 표현하는 건 좋은데 타이밍이 중요해.',
+        tip: '바로 말하기보다 10분만 기다려봐 — 그게 더 잘 전달돼 💕'
+      },
+      P: {
+        name: '해결 정리형',
+        char: 'practical.png',
+        desc: '감정보다 해결이 먼저인 결. 남친 입장에선 공감이 먼저 필요할 수도 있어.',
+        tip: '"어떻게 할까?"보다 "많이 힘들었겠다"가 먼저야 🌱'
+      },
+      S: {
+        name: '분위기 풀이형',
+        char: 'social.png',
+        desc: '분위기를 풀려는 본능이 있는 결. 가끔은 진지한 대화도 필요해.',
+        tip: '웃음으로 넘기지 말고 "사실 이게 걱정됐어"를 한 번만 말해봐 ✨'
+      },
+      R: {
+        name: '낭만 기대형',
+        char: 'romantic.png',
+        desc: '화해에 작은 특별함을 기대하는 결. 남친이 모를 수 있으니까 직접 알려줘.',
+        tip: '"꽃 한 송이면 다 잊어버릴 것 같아"처럼 구체적으로 말해줘 🌸'
+      }
+    };
+
+    const $ = (id) => document.getElementById(id);
+    let idx = 0;
+    let scores = { E: 0, S: 0, A: 0, R: 0, P: 0 };
+
+    function showOnly(id) {
+      ['screen-intro','screen-q','screen-loading','screen-result']
+        .forEach(s => $(s).classList.toggle('hidden', s !== id));
+    }
+    function renderDots() {
+      const el = $('dots');
+      el.innerHTML = '';
+      for (let i = 0; i < PATTERNS.length; i++) {
+        const d = document.createElement('div');
+        d.className = 'dot' + (i <= idx ? ' on' : '');
+        el.appendChild(d);
+      }
+    }
+    function renderQ() {
+      renderDots();
+      const p = PATTERNS[idx];
+      $('qtext').textContent = p.text;
+      const opts = $('opts');
+      opts.innerHTML = '';
+      OPTIONS.forEach((o) => {
+        const b = document.createElement('button');
+        b.className = 'opt';
+        b.textContent = o.label;
+        b.addEventListener('click', () => answer(p, o));
+        opts.appendChild(b);
+      });
+    }
+    function answer(p, o) {
+      scores[p.esarp] += o.score;
+      gtag('event', 'pattern_answer', { concept_id: CONCEPT_ID, q: idx, score: o.score });
+      idx += 1;
+      if (idx >= PATTERNS.length) runLoading();
+      else renderQ();
+    }
+
+    function runLoading() {
+      showOnly('screen-loading');
+      const steps = [
+        '답변 패턴 보고 있어',
+        'ESARP 결 매칭 중',
+        '우리 사이의 결 정리 중',
+        '거의 다 됐어'
+      ];
+      let s = 0;
+      $('loading-text').textContent = steps[0];
+      const t = setInterval(() => {
+        s += 1;
+        if (s >= steps.length) {
+          clearInterval(t);
+          finish();
+          return;
+        }
+        $('loading-text').textContent = steps[s];
+      }, 600);
+    }
+
+    function finish() {
+      const main = Object.entries(scores).sort((a,b) => b[1]-a[1])[0][0];
+      const T = TYPES[main];
+      $('result-img').src = '../assets/characters/' + T.char;
+      $('result-img').alt = T.name;
+      $('result-title').textContent = T.name + ' 결';
+      $('result-desc').textContent = T.desc;
+      $('tip-card').textContent = T.tip;
+      gtag('event', 'pattern_complete', { concept_id: CONCEPT_ID, main_pattern: main });
+      if (window.HeartOpenAnalytics) HeartOpenAnalytics.trackResultView(CONCEPT_ID, main);
+      showOnly('screen-result');
+    }
+
+    $('btn-start').addEventListener('click', () => {
+      if (window.HeartOpenAnalytics) {
+        HeartOpenAnalytics.trackPageView(CONCEPT_ID, CONCEPT_NAME);
+        HeartOpenAnalytics.trackGameStart(CONCEPT_ID, CONCEPT_NAME);
+      }
+      idx = 0;
+      scores = { E: 0, S: 0, A: 0, R: 0, P: 0 };
+      showOnly('screen-q');
+      renderQ();
+    });
+    $('btn-share').addEventListener('click', () => {
+      HeartOpenResultCard.shareResult({
+        conceptId: CONCEPT_ID,
+        title: 'Heart Open 우리 패턴 — ' + $('result-title').textContent,
+        url: location.href
+      });
+    });
+    $('btn-save').addEventListener('click', () => HeartOpenResultCard.saveResult('#result-card'));
+    $('btn-cta').addEventListener('click', () => {
+      if (window.HeartOpenAnalytics) HeartOpenAnalytics.trackCtaClick(CONCEPT_ID, 'app_store');
+    });
+    $('btn-restart').addEventListener('click', () => {
+      idx = 0; scores = { E: 0, S: 0, A: 0, R: 0, P: 0 };
+      showOnly('screen-intro');
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>보석 Daily — Heart Open</title>
+  <meta name="description" content="매일 한 문제 풀고 ESARP 보석 모으기 💎">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+  <link rel="stylesheet" href="../shared/tokens.css">
+  <link rel="stylesheet" href="../shared/result-card.css">
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-2NYTV5FKDC"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){ dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'G-2NYTV5FKDC');
+  </script>
+  <script src="../shared/analytics.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
+  <script src="../shared/result-card.js" defer></script>
+  <style>
+    .stage { padding-top: var(--space-6); text-align: center; }
+    h1 { font-size: 22px; font-weight: 700; line-height: 1.4; }
+    .lead { color: var(--text-secondary); font-size: 14px; margin-top: var(--space-2); line-height: 1.6; }
+
+    .box {
+      margin: var(--space-8) auto var(--space-6);
+      width: 180px; height: 180px;
+      border-radius: 28px;
+      background: linear-gradient(135deg, var(--primary-light) 0%, var(--accent) 100%);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 88px;
+      box-shadow: var(--shadow-md);
+      transition: transform .2s ease;
+    }
+    .box.shake { animation: shake .5s ease-in-out infinite; }
+    @keyframes shake {
+      0%,100% { transform: rotate(0); }
+      25% { transform: rotate(-6deg); }
+      75% { transform: rotate(6deg); }
+    }
+
+    .question {
+      margin-top: var(--space-6);
+      background: var(--card);
+      border-radius: var(--radius-lg);
+      padding: var(--space-6) var(--space-5);
+      box-shadow: var(--shadow-sm);
+    }
+    .q-text { font-size: 17px; font-weight: 700; line-height: 1.5; }
+    .choices { display: grid; gap: var(--space-3); margin-top: var(--space-5); }
+    .choice {
+      background: var(--surface-warm);
+      border: 2px solid transparent;
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+      font-size: 15px; font-weight: 600;
+      color: var(--text-primary);
+    }
+    .choice:active { transform: scale(0.98); }
+
+    .start, .cta-restart {
+      margin-top: var(--space-6);
+      width: 100%;
+      background: var(--primary);
+      color: #fff;
+      padding: 16px;
+      font-size: 16px; font-weight: 700;
+      border-radius: var(--radius-pill);
+      box-shadow: var(--shadow-md);
+    }
+
+    .progress {
+      margin-top: var(--space-6);
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: var(--space-2);
+    }
+    .progress .cell {
+      background: var(--card);
+      border-radius: var(--radius-md);
+      padding: var(--space-3) var(--space-1);
+      box-shadow: var(--shadow-sm);
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+    .progress .cell .gem { font-size: 22px; }
+    .progress .cell .count { font-size: 14px; font-weight: 700; color: var(--text-primary); margin-top: 2px; }
+
+    .gem-pop {
+      font-size: 96px;
+      animation: pop .6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    @keyframes pop {
+      0% { transform: scale(0); opacity: 0; }
+      60% { transform: scale(1.2); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .reset-link {
+      margin-top: var(--space-4);
+      font-size: 12px;
+      color: var(--text-secondary);
+      text-decoration: underline;
+    }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- INTRO / TODAY -->
+    <section id="screen-intro" class="stage">
+      <h1>오늘의 보석은? 💎</h1>
+      <p class="lead">매일 한 문제 풀고<br>ESARP 보석을 하나씩 모아봐</p>
+      <div class="box shake" id="box">🎁</div>
+      <button class="start" id="btn-open">상자 열기</button>
+      <div class="progress" id="progress-grid"></div>
+      <button class="reset-link" id="btn-reset">데이터 초기화</button>
+    </section>
+
+    <!-- ALREADY PLAYED -->
+    <section id="screen-already" class="stage hidden">
+      <h1>오늘은 이미 받았어 💕</h1>
+      <p class="lead">내일 또 올 수 있어!<br>지금까지 모은 보석:</p>
+      <div class="progress" id="progress-grid-2"></div>
+      <button class="cta-restart" id="btn-restart" style="background:transparent;color:var(--text-secondary);box-shadow:none;">결과 다시 보기</button>
+      <button class="reset-link" id="btn-reset-2">데이터 초기화</button>
+    </section>
+
+    <!-- QUESTION -->
+    <section id="screen-question" class="stage hidden">
+      <div class="question">
+        <div class="q-text" id="q-text"></div>
+        <div class="choices">
+          <button class="choice" data-choice="a" id="choice-a"></button>
+          <button class="choice" data-choice="b" id="choice-b"></button>
+        </div>
+      </div>
+    </section>
+
+    <!-- OPENING -->
+    <section id="screen-open" class="stage hidden">
+      <h1>두근두근... ✨</h1>
+      <p class="lead">상자에서 보석이 나오고 있어</p>
+      <div class="gem-pop" id="gem-pop">💎</div>
+    </section>
+
+    <!-- RESULT -->
+    <section id="screen-result" class="stage hidden">
+      <div class="result-card" id="result-card">
+        <img id="result-img" src="" alt="">
+        <div class="result-title" id="result-title"></div>
+        <div class="result-desc" id="result-desc"></div>
+        <div class="result-actions">
+          <button class="btn-share" id="btn-share">공유</button>
+          <button class="btn-save" id="btn-save">저장</button>
+        </div>
+        <a class="btn-cta" id="btn-cta" href="https://heartopen.app">앱에서 우리 타입 정밀 분석 →</a>
+      </div>
+      <div class="progress" id="progress-grid-3" style="margin-top: var(--space-6);"></div>
+      <p class="lead" style="margin-top: var(--space-4);">가장 많이 모은 보석이 진짜 내 타입! 💕</p>
+    </section>
+  </div>
+
+  <script>
+    const CONCEPT_ID = '04';
+    const CONCEPT_NAME = 'gem_daily';
+
+    const GEMS = {
+      E: { name: '불꽃 루비',     emoji: '🔴', color: '#FF6F91', char: 'emotion.png',    desc: '오늘은 감정에 솔직한 하루였어' },
+      S: { name: '황금 토파즈',   emoji: '🟡', color: '#FFB347', char: 'social.png',     desc: '주변과 함께 빛나는 하루였어' },
+      A: { name: '보라 자수정',   emoji: '🟣', color: '#C3B1E1', char: 'attachment.png', desc: '안정과 신뢰가 깊어진 하루' },
+      R: { name: '핑크 로즈쿼츠', emoji: '🩷', color: '#FF9EC4', char: 'romantic.png',   desc: '설렘이 가득했던 하루' },
+      P: { name: '초록 에메랄드', emoji: '🟢', color: '#82C09A', char: 'practical.png',  desc: '단단하게 자기 길을 갔던 하루' }
+    };
+    const ORDER = ['E','S','A','R','P'];
+
+    // Daily question pool — picked deterministically from date.
+    const QUESTIONS = [
+      { text: '오늘 남친이랑 연락이 없었다면?',          a: '내가 먼저 연락해',           b: '기다려봐',                aType: 'E', bType: 'A' },
+      { text: '데이트 전날 밤, 나는?',                  a: '코디·플랜 짜느라 설렘',     b: '편하게 푹 자자',          aType: 'R', bType: 'P' },
+      { text: '주말에 둘 다 약속 없으면?',              a: '친구들 불러서 같이 놀자',   b: '둘만 조용히 있고 싶어',   aType: 'S', bType: 'A' },
+      { text: '남친이 갑자기 작은 선물을 줬어',          a: '와 진짜 너무 좋아!',         b: '왜? 무슨 일이야?',        aType: 'R', bType: 'P' },
+      { text: '오늘 살짝 짜증나는 일이 있었다면?',       a: '바로 털어놓을래',            b: '혼자 정리부터',           aType: 'E', bType: 'P' },
+      { text: '커플 SNS에 올리는 건 어때?',             a: '예쁜 순간은 남기는 거야',    b: '둘만 알면 충분해',        aType: 'S', bType: 'A' },
+      { text: '남친이 약속 시간에 늦었어',              a: '괜찮아, 사정이 있겠지',      b: '미리 말해줬으면 좋았어',  aType: 'A', bType: 'P' }
+    ];
+
+    const KEY = 'heart-open-gems-v1';
+    const $ = (id) => document.getElementById(id);
+    function todayStr() { return new Date().toISOString().split('T')[0]; }
+    function dayIndex() {
+      const epoch = new Date('2026-01-01').getTime();
+      const days = Math.floor((Date.now() - epoch) / 86400000);
+      return ((days % QUESTIONS.length) + QUESTIONS.length) % QUESTIONS.length;
+    }
+    function load() {
+      try { return JSON.parse(localStorage.getItem(KEY)) || {}; }
+      catch (_) { return {}; }
+    }
+    function save(state) {
+      try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (_) {}
+    }
+    function counts(state) {
+      return ORDER.map(t => ({ t, n: state[t] || 0 }));
+    }
+
+    function showOnly(id) {
+      ['screen-intro','screen-already','screen-question','screen-open','screen-result']
+        .forEach(s => $(s).classList.toggle('hidden', s !== id));
+    }
+
+    function renderProgress(targetId) {
+      const el = $(targetId);
+      if (!el) return;
+      el.innerHTML = '';
+      const state = load();
+      counts(state).forEach(({ t, n }) => {
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+        cell.innerHTML = `<div class="gem">${GEMS[t].emoji}</div><div class="count">×${n}</div><div>${GEMS[t].name.split(' ')[1] || GEMS[t].name}</div>`;
+        el.appendChild(cell);
+      });
+    }
+
+    function bootstrap() {
+      const state = load();
+      renderProgress('progress-grid');
+      renderProgress('progress-grid-2');
+      if (state.lastDate === todayStr()) {
+        showOnly('screen-already');
+      } else {
+        showOnly('screen-intro');
+      }
+    }
+
+    $('btn-open').addEventListener('click', () => {
+      if (window.HeartOpenAnalytics) {
+        HeartOpenAnalytics.trackPageView(CONCEPT_ID, CONCEPT_NAME);
+        HeartOpenAnalytics.trackGameStart(CONCEPT_ID, CONCEPT_NAME);
+      }
+      gtag('event', 'daily_play', { concept_id: CONCEPT_ID, date: todayStr() });
+      const q = QUESTIONS[dayIndex()];
+      $('q-text').textContent = q.text;
+      $('choice-a').textContent = q.a;
+      $('choice-b').textContent = q.b;
+      $('choice-a').onclick = () => answer('a', q);
+      $('choice-b').onclick = () => answer('b', q);
+      showOnly('screen-question');
+    });
+
+    function answer(choice, q) {
+      const type = choice === 'a' ? q.aType : q.bType;
+      gtag('event', 'question_answer', { concept_id: CONCEPT_ID, choice });
+      showOnly('screen-open');
+      $('gem-pop').textContent = GEMS[type].emoji;
+      setTimeout(() => reveal(type), 1200);
+    }
+
+    function reveal(type) {
+      const state = load();
+      state[type] = (state[type] || 0) + 1;
+      state.lastDate = todayStr();
+      state.lastType = type;
+      save(state);
+      gtag('event', 'gem_earned', { concept_id: CONCEPT_ID, gem_type: type });
+      renderResult(type);
+      renderProgress('progress-grid-3');
+      showOnly('screen-result');
+      if (window.HeartOpenAnalytics) HeartOpenAnalytics.trackResultView(CONCEPT_ID, type);
+      if (navigator.vibrate) navigator.vibrate(120);
+    }
+
+    function renderResult(type) {
+      const g = GEMS[type];
+      $('result-img').src = '../assets/characters/' + g.char;
+      $('result-img').alt = g.name;
+      $('result-title').textContent = '오늘은 ' + g.name + ' ' + g.emoji;
+      $('result-desc').textContent = g.desc;
+    }
+
+    $('btn-share').addEventListener('click', () => {
+      HeartOpenResultCard.shareResult({
+        conceptId: CONCEPT_ID,
+        title: 'Heart Open 보석 Daily — ' + $('result-title').textContent,
+        url: location.href
+      });
+    });
+    $('btn-save').addEventListener('click', () => HeartOpenResultCard.saveResult('#result-card'));
+    $('btn-cta').addEventListener('click', () => {
+      if (window.HeartOpenAnalytics) HeartOpenAnalytics.trackCtaClick(CONCEPT_ID, 'app_store');
+    });
+    $('btn-restart').addEventListener('click', () => {
+      const state = load();
+      if (state.lastType) {
+        renderResult(state.lastType);
+        renderProgress('progress-grid-3');
+        showOnly('screen-result');
+      }
+    });
+
+    function resetData() {
+      if (!confirm('지금까지 모은 보석이 모두 사라져. 진짜 초기화할까?')) return;
+      try { localStorage.removeItem(KEY); } catch (_) {}
+      bootstrap();
+    }
+    $('btn-reset').addEventListener('click', resetData);
+    $('btn-reset-2').addEventListener('click', resetData);
+
+    bootstrap();
+  </script>
+</body>
+</html>

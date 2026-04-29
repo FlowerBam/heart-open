@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>별빛 다마고치 — Heart Open</title>
+  <meta name="description" content="매일 돌봐주면 자라는 ESARP 연애 캐릭터 🌱">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+  <link rel="stylesheet" href="../shared/tokens.css">
+  <link rel="stylesheet" href="../shared/result-card.css">
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-2NYTV5FKDC"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){ dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'G-2NYTV5FKDC');
+  </script>
+  <script src="../shared/analytics.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
+  <script src="../shared/result-card.js" defer></script>
+  <style>
+    .stage { padding-top: var(--space-6); text-align: center; }
+    h1 { font-size: 22px; font-weight: 700; line-height: 1.4; }
+    .lead { color: var(--text-secondary); font-size: 14px; margin-top: var(--space-2); line-height: 1.6; }
+
+    .pet-stage {
+      margin: var(--space-8) auto var(--space-4);
+      width: 100%;
+      height: 240px;
+      border-radius: var(--radius-lg);
+      background: radial-gradient(circle at 50% 60%, var(--accent-surface) 0%, var(--bg) 70%);
+      display: flex; align-items: center; justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .pet-stage img { transition: width .6s ease, filter .6s ease, opacity .6s ease; }
+    .stage-label { position: absolute; bottom: 12px; left: 0; right: 0; font-size: 12px; color: var(--text-secondary); }
+
+    .xp-bar {
+      margin-top: var(--space-3);
+      background: var(--accent-surface);
+      border-radius: var(--radius-pill);
+      height: 14px;
+      overflow: hidden;
+      position: relative;
+    }
+    .xp-fill {
+      background: linear-gradient(90deg, var(--primary) 0%, var(--accent) 100%);
+      height: 100%;
+      width: 0%;
+      transition: width .6s ease;
+    }
+    .xp-text { font-size: 12px; color: var(--text-secondary); margin-top: 6px; }
+
+    .care-grid { display: grid; gap: var(--space-3); margin-top: var(--space-6); }
+    .care {
+      background: var(--card);
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+      box-shadow: var(--shadow-sm);
+      display: flex; align-items: center; gap: var(--space-3);
+      text-align: left;
+      font-size: 15px;
+      font-weight: 600;
+    }
+    .care:active { transform: scale(0.98); }
+    .care .e { font-size: 28px; }
+    .care .lbl { flex: 1; }
+    .care .xp { color: var(--primary-dark); font-weight: 700; font-size: 13px; }
+
+    .start, .cta-restart {
+      margin-top: var(--space-6);
+      width: 100%;
+      background: var(--primary);
+      color: #fff;
+      padding: 16px;
+      font-size: 16px; font-weight: 700;
+      border-radius: var(--radius-pill);
+      box-shadow: var(--shadow-md);
+    }
+
+    .pick-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-3); margin-top: var(--space-6); }
+    .pick {
+      background: var(--card);
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+      box-shadow: var(--shadow-sm);
+      text-align: center;
+    }
+    .pick img { width: 80px; height: 80px; object-fit: contain; margin: 0 auto; }
+    .pick .name { font-weight: 700; margin-top: var(--space-2); font-size: 14px; }
+    .pick .desc { font-size: 11px; color: var(--text-secondary); margin-top: 4px; line-height: 1.4; }
+    .pick:active { transform: scale(0.98); }
+
+    .levelup-overlay {
+      position: fixed; inset: 0;
+      background: radial-gradient(circle, rgba(255,179,71,0.4) 0%, rgba(255,249,247,0.95) 70%);
+      display: flex; align-items: center; justify-content: center; flex-direction: column;
+      gap: var(--space-3);
+      z-index: 100;
+      animation: shine .9s ease-out;
+    }
+    @keyframes shine {
+      0% { opacity: 0; transform: scale(1.1); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+    .levelup-overlay h2 { font-size: 28px; color: var(--primary-dark); }
+    .levelup-overlay p { font-size: 14px; color: var(--text-secondary); }
+
+    .reset-link { margin-top: var(--space-4); font-size: 12px; color: var(--text-secondary); text-decoration: underline; }
+    .hidden { display: none !important; }
+
+    .streak {
+      margin-top: var(--space-3);
+      display: inline-block;
+      background: var(--surface-warm);
+      color: var(--primary-dark);
+      padding: 6px 14px;
+      border-radius: var(--radius-pill);
+      font-size: 12px; font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- INTRO -->
+    <section id="screen-intro" class="stage hidden">
+      <h1>내 연애 캐릭터를 골라봐 🌱</h1>
+      <p class="lead">5가지 ESARP 캐릭터 중 하나가<br>너랑 함께 자랄 거야</p>
+      <div class="pick-grid" id="pick-grid"></div>
+    </section>
+
+    <!-- MAIN -->
+    <section id="screen-main" class="stage hidden">
+      <h1 id="pet-name">내 캐릭터</h1>
+      <div class="pet-stage">
+        <img id="pet-img" src="" alt="">
+        <div class="stage-label" id="stage-label"></div>
+      </div>
+      <div class="streak" id="streak"></div>
+      <div class="xp-bar"><div class="xp-fill" id="xp-fill"></div></div>
+      <div class="xp-text" id="xp-text"></div>
+
+      <div id="care-area">
+        <p class="lead" style="margin-top: var(--space-5);">오늘 하나만 골라줘</p>
+        <div class="care-grid" id="care-grid"></div>
+      </div>
+      <div id="done-area" class="hidden">
+        <p class="lead" style="margin-top: var(--space-5);">오늘 돌봄 완료 💕<br>내일 또 와줘</p>
+        <button class="cta-restart" id="btn-share-pet" style="background:transparent;color:var(--primary-dark);box-shadow:none;text-decoration:underline;">성장 카드 보기</button>
+      </div>
+
+      <button class="reset-link" id="btn-reset">캐릭터 초기화</button>
+    </section>
+
+    <!-- RESULT (share card) -->
+    <section id="screen-result" class="stage hidden">
+      <div class="result-card" id="result-card">
+        <img id="result-img" src="" alt="">
+        <div class="result-title" id="result-title"></div>
+        <div class="result-desc" id="result-desc"></div>
+        <div class="result-actions">
+          <button class="btn-share" id="btn-share">공유</button>
+          <button class="btn-save" id="btn-save">저장</button>
+        </div>
+        <a class="btn-cta" id="btn-cta" href="https://heartopen.app">앱에서 우리 타입 정밀 분석 →</a>
+      </div>
+      <button class="cta-restart" id="btn-back" style="background:transparent;color:var(--text-secondary);box-shadow:none;">돌아가기</button>
+    </section>
+  </div>
+
+  <script>
+    const CONCEPT_ID = '07';
+    const CONCEPT_NAME = 'tamagotchi';
+
+    const TYPES = {
+      E: { name: '감정',  file: 'emotion.png',    desc: '솔직한 표현형',  trait2: '감정을 더 잘 표현하게 됐어 💕', trait3: '솔직한 사랑의 완성형! 🌟' },
+      S: { name: '사교',  file: 'social.png',     desc: '함께가 빛나는',  trait2: '주변이 더 밝아졌어 ✨',         trait3: '분위기 퀸 등극! 🎉' },
+      A: { name: '애착',  file: 'attachment.png', desc: '안정과 신뢰',    trait2: '더 깊은 신뢰가 생겼어 🌙',     trait3: '안정적인 사랑의 달인! 💎' },
+      R: { name: '낭만',  file: 'romantic.png',   desc: '설렘 가득',      trait2: '설렘이 더 깊어졌어 🌸',         trait3: '진짜 낭만주의자! 🌈' },
+      P: { name: '현실',  file: 'practical.png',  desc: '단단한 균형',    trait2: '사랑도 성장했어 🌱',           trait3: '현실과 사랑의 완벽한 균형! ⚖️' }
+    };
+    const ORDER = ['E','S','A','R','P'];
+
+    const STAGES = [
+      { stage: 1, xp: 0,   size: 100, opacity: 0.7, brightness: 0.85, label: '씨앗 단계 — 이제 막 싹이 텄어 🌱' },
+      { stage: 2, xp: 100, size: 160, opacity: 0.9, brightness: 0.95, label: '꽃봉오리 — 점점 자라고 있어 ✨' },
+      { stage: 3, xp: 300, size: 220, opacity: 1.0, brightness: 1.10, label: '만개 — 완전히 피어났어 💕' }
+    ];
+
+    const ACTIONS = [
+      { id: 'talk',  emoji: '💬', label: '오늘 남친이랑 대화했어', xp: 20 },
+      { id: 'think', emoji: '💭', label: '오늘 남친 생각했어',     xp: 10 },
+      { id: 'date',  emoji: '🌸', label: '오늘 남친이랑 만났어',   xp: 30 }
+    ];
+
+    const KEY = 'heart-open-pet-v1';
+    const $ = (id) => document.getElementById(id);
+    function todayStr() { return new Date().toISOString().split('T')[0]; }
+    function yesterdayStr() {
+      const d = new Date(); d.setDate(d.getDate() - 1);
+      return d.toISOString().split('T')[0];
+    }
+    function load() {
+      try { return JSON.parse(localStorage.getItem(KEY)); } catch (_) { return null; }
+    }
+    function save(p) {
+      try { localStorage.setItem(KEY, JSON.stringify(p)); } catch (_) {}
+    }
+    function fresh() {
+      return { type: null, xp: 0, lastCare: null, streakDays: 0, totalDays: 0 };
+    }
+    function stageFor(xp) {
+      let cur = STAGES[0];
+      for (const s of STAGES) if (xp >= s.xp) cur = s;
+      return cur;
+    }
+    function showOnly(id) {
+      ['screen-intro','screen-main','screen-result']
+        .forEach(s => $(s).classList.toggle('hidden', s !== id));
+    }
+
+    function renderPick() {
+      const g = $('pick-grid');
+      g.innerHTML = '';
+      ORDER.forEach(t => {
+        const T = TYPES[t];
+        const card = document.createElement('button');
+        card.className = 'pick';
+        card.innerHTML = `<img src="../assets/characters/${T.file}" alt="${T.name}"><div class="name">${T.name}</div><div class="desc">${T.desc}</div>`;
+        card.addEventListener('click', () => choosePet(t));
+        g.appendChild(card);
+      });
+    }
+    function choosePet(type) {
+      const p = fresh();
+      p.type = type;
+      save(p);
+      gtag('event', 'pet_created', { concept_id: CONCEPT_ID, pet_type: type });
+      enterMain();
+    }
+
+    function renderMain() {
+      const p = load();
+      if (!p || !p.type) { showOnly('screen-intro'); renderPick(); return; }
+      const T = TYPES[p.type];
+      const s = stageFor(p.xp);
+      $('pet-name').textContent = T.name + ' 캐릭터';
+      const img = $('pet-img');
+      img.src = '../assets/characters/' + T.file;
+      img.style.width = s.size + 'px';
+      img.style.opacity = s.opacity;
+      img.style.filter = `brightness(${s.brightness})`;
+      $('stage-label').textContent = s.label;
+
+      const next = STAGES.find(x => x.xp > p.xp);
+      const lower = stageFor(p.xp).xp;
+      const upper = next ? next.xp : p.xp;
+      const denom = upper - lower || 1;
+      const pct = next ? Math.min(100, Math.round(((p.xp - lower) / denom) * 100)) : 100;
+      $('xp-fill').style.width = pct + '%';
+      $('xp-text').textContent = next ? `XP ${p.xp} / ${upper}` : `XP ${p.xp} (만개 단계)`;
+      $('streak').textContent = `D+${p.streakDays || 0}일 함께 성장 중`;
+
+      const careArea = $('care-area');
+      const doneArea = $('done-area');
+      if (p.lastCare === todayStr()) {
+        careArea.classList.add('hidden');
+        doneArea.classList.remove('hidden');
+      } else {
+        careArea.classList.remove('hidden');
+        doneArea.classList.add('hidden');
+        const grid = $('care-grid');
+        grid.innerHTML = '';
+        ACTIONS.forEach(a => {
+          const btn = document.createElement('button');
+          btn.className = 'care';
+          btn.innerHTML = `<span class="e">${a.emoji}</span><span class="lbl">${a.label}</span><span class="xp">+${a.xp} XP</span>`;
+          btn.addEventListener('click', () => doCare(a));
+          grid.appendChild(btn);
+        });
+      }
+    }
+
+    function doCare(a) {
+      const p = load();
+      const beforeStage = stageFor(p.xp).stage;
+      p.xp += a.xp;
+      const afterStage = stageFor(p.xp).stage;
+      // streak update
+      if (p.lastCare === yesterdayStr()) p.streakDays = (p.streakDays || 0) + 1;
+      else if (p.lastCare !== todayStr()) p.streakDays = 1;
+      p.totalDays = (p.totalDays || 0) + 1;
+      p.lastCare = todayStr();
+      save(p);
+      gtag('event', 'daily_care', { concept_id: CONCEPT_ID, action: a.id, xp_gained: a.xp });
+      gtag('event', 'streak_update', { concept_id: CONCEPT_ID, streak_days: p.streakDays });
+      if (afterStage > beforeStage) {
+        gtag('event', 'level_up', { concept_id: CONCEPT_ID, new_stage: afterStage });
+        showLevelUp(afterStage, p.type);
+      }
+      renderMain();
+    }
+
+    function showLevelUp(stage, type) {
+      const T = TYPES[type];
+      const msg = stage === 2 ? T.trait2 : T.trait3;
+      const o = document.createElement('div');
+      o.className = 'levelup-overlay';
+      o.innerHTML = `<h2>레벨 업! ${stage}단계</h2><p>${msg}</p><button class="cta-restart" style="max-width:240px;">계속</button>`;
+      o.querySelector('button').addEventListener('click', () => o.remove());
+      document.body.appendChild(o);
+      if (navigator.vibrate) navigator.vibrate([60, 60, 120]);
+    }
+
+    function enterMain() {
+      showOnly('screen-main');
+      renderMain();
+      if (window.HeartOpenAnalytics) {
+        HeartOpenAnalytics.trackPageView(CONCEPT_ID, CONCEPT_NAME);
+        HeartOpenAnalytics.trackGameStart(CONCEPT_ID, CONCEPT_NAME);
+      }
+    }
+
+    function showShareCard() {
+      const p = load();
+      if (!p || !p.type) return;
+      const T = TYPES[p.type];
+      const s = stageFor(p.xp);
+      $('result-img').src = '../assets/characters/' + T.file;
+      $('result-img').alt = T.name;
+      $('result-title').textContent = T.name + ' · ' + s.label.split(' — ')[0];
+      $('result-desc').textContent = `D+${p.streakDays || 0}일 함께 성장 중 · XP ${p.xp}`;
+      showOnly('screen-result');
+      if (window.HeartOpenAnalytics) HeartOpenAnalytics.trackResultView(CONCEPT_ID, p.type);
+    }
+
+    $('btn-share').addEventListener('click', () => {
+      HeartOpenResultCard.shareResult({
+        conceptId: CONCEPT_ID,
+        title: 'Heart Open 다마고치 — ' + $('result-title').textContent,
+        url: location.href
+      });
+    });
+    $('btn-save').addEventListener('click', () => HeartOpenResultCard.saveResult('#result-card'));
+    $('btn-cta').addEventListener('click', () => {
+      if (window.HeartOpenAnalytics) HeartOpenAnalytics.trackCtaClick(CONCEPT_ID, 'app_store');
+    });
+    $('btn-back').addEventListener('click', enterMain);
+    $('btn-share-pet').addEventListener('click', showShareCard);
+
+    $('btn-reset').addEventListener('click', () => {
+      if (!confirm('지금까지 키운 캐릭터가 사라져. 진짜 초기화할까?')) return;
+      try { localStorage.removeItem(KEY); } catch (_) {}
+      bootstrap();
+    });
+
+    function bootstrap() {
+      const p = load();
+      if (!p || !p.type) {
+        renderPick();
+        showOnly('screen-intro');
+      } else {
+        enterMain();
+      }
+    }
+    bootstrap();
+  </script>
+</body>
+</html>

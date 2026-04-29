@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>남친 머릿속 — Heart Open</title>
+  <meta name="description" content="ESARP 매핑으로 남친 입장 들여다보기 💭">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+  <link rel="stylesheet" href="../shared/tokens.css">
+  <link rel="stylesheet" href="../shared/result-card.css">
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-2NYTV5FKDC"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){ dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'G-2NYTV5FKDC');
+  </script>
+  <script src="../shared/analytics.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
+  <script src="../shared/result-card.js" defer></script>
+  <style>
+    .stage { padding-top: var(--space-6); text-align: center; }
+    h1 { font-size: 22px; font-weight: 700; line-height: 1.4; }
+    .lead { color: var(--text-secondary); font-size: 14px; margin-top: var(--space-2); line-height: 1.6; }
+    .start, .cta-restart, .next-btn {
+      margin-top: var(--space-6); width: 100%;
+      background: var(--primary); color: #fff;
+      padding: 14px; font-size: 15px; font-weight: 700;
+      border-radius: var(--radius-pill);
+      box-shadow: var(--shadow-md);
+    }
+    .pick-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-3); margin-top: var(--space-6); }
+    .pick {
+      background: var(--card);
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+      box-shadow: var(--shadow-sm);
+      text-align: center;
+    }
+    .pick.selected { outline: 2px solid var(--primary); }
+    .pick img { width: 80px; height: 80px; object-fit: contain; margin: 0 auto; }
+    .pick .name { font-weight: 700; margin-top: var(--space-2); font-size: 14px; }
+    .pick .desc { font-size: 11px; color: var(--text-secondary); margin-top: 4px; line-height: 1.4; }
+
+    .scenario {
+      margin-top: var(--space-5);
+      background: var(--card);
+      border-radius: var(--radius-lg);
+      padding: var(--space-5);
+      box-shadow: var(--shadow-sm);
+      text-align: left;
+    }
+    .scn-step { font-size: 12px; color: var(--primary-dark); font-weight: 700; }
+    .scn-text { font-size: 16px; font-weight: 700; margin-top: 6px; line-height: 1.5; }
+    .bubble {
+      margin-top: var(--space-4);
+      background: var(--accent-surface);
+      border-radius: 18px 18px 18px 4px;
+      padding: var(--space-4) var(--space-5);
+      color: var(--primary-dark);
+      font-size: 15px;
+      line-height: 1.6;
+      min-height: 60px;
+    }
+    .tip {
+      margin-top: var(--space-3);
+      background: var(--surface-warm);
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+    .tip b { color: var(--text-primary); }
+
+    .badge-prob {
+      display: inline-block;
+      background: var(--surface-warm);
+      color: var(--primary-dark);
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
+      margin-bottom: var(--space-3);
+    }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <section id="screen-intro" class="stage">
+      <h1>남친 머릿속 들여다보기 💭</h1>
+      <p class="lead">남친의 ESARP 결을 골라봐.<br>그 결 기반으로 속마음 시뮬을 보여줄게.</p>
+      <div class="badge-prob" style="margin-top: var(--space-4);">ESARP 매핑 결과 · 가짜 AI 아님</div>
+      <div class="pick-grid" id="pick-grid"></div>
+    </section>
+
+    <section id="screen-sim" class="stage hidden">
+      <div class="badge-prob">ESARP 매핑 시뮬레이션</div>
+      <div class="scenario">
+        <div class="scn-step" id="scn-step"></div>
+        <div class="scn-text" id="scn-text"></div>
+        <div class="bubble" id="bubble"></div>
+        <div class="tip" id="tip"></div>
+      </div>
+      <button class="next-btn" id="btn-next">다음 상황 →</button>
+    </section>
+
+    <section id="screen-result" class="stage hidden">
+      <div class="result-card" id="result-card">
+        <img id="result-img" src="" alt="">
+        <div class="result-title" id="result-title"></div>
+        <div class="result-desc" id="result-desc"></div>
+        <div class="result-actions">
+          <button class="btn-share" id="btn-share">공유</button>
+          <button class="btn-save" id="btn-save">저장</button>
+        </div>
+        <a class="btn-cta" id="btn-cta" href="https://heartopen.app">우리 둘 ESARP 정밀 매칭 →</a>
+      </div>
+      <button class="cta-restart" id="btn-restart" style="background:transparent;color:var(--text-secondary);box-shadow:none;">다른 타입으로 다시 보기</button>
+    </section>
+  </div>
+
+  <script>
+    const CONCEPT_ID = '16';
+    const CONCEPT_NAME = 'bf_simulator';
+
+    const TYPES = {
+      E: { name: '감정',  file: 'emotion.png',    desc: '솔직한 표현형',     summary: '감정을 드러내고 싶은데 방법을 모르는 결이야. 먼저 감정에 공감해주면 마음을 열어.' },
+      S: { name: '사교',  file: 'social.png',     desc: '분위기에 강한',     summary: '어색함을 못 견디는 결이야. 가벼운 톤으로 먼저 다가가면 잘 받아줘.' },
+      A: { name: '애착',  file: 'attachment.png', desc: '안정 추구',         summary: '관계가 흔들릴까봐 무서워하는 결이야. "우리 괜찮아"라고 한 번만 확인해줘.' },
+      R: { name: '낭만',  file: 'romantic.png',   desc: '이벤트형',          summary: '드라마틱한 화해를 그리는 결이야. 작은 제스처 하나에도 크게 반응해.' },
+      P: { name: '현실',  file: 'practical.png',  desc: '정리·해결형',       summary: '감정 정리 후에 말하는 결이야. 시간을 주고, 차분한 자리에서 얘기하면 잘 통해.' }
+    };
+    const ORDER = ['E','S','A','R','P'];
+
+    const SCENARIOS = [
+      {
+        situation: '싸운 후 남친이 갑자기 말이 없어졌어',
+        minds: {
+          E: '"나도 상처받았는데 어떻게 표현해야 할지 모르겠어. 먼저 연락하기 두렵고…"',
+          S: '"어색한 분위기 싫은데, 뭔가 가볍게 풀어볼 타이밍을 찾고 있어."',
+          A: '"관계가 흔들릴까봐 무서워. 시간이 지나면 나아지겠지 믿고 싶어."',
+          R: '"이럴 때 좀 드라마틱하게 화해하면 좋을 텐데… 어떻게 다가갈까."',
+          P: '"감정적일 때 말하면 더 안 좋을 것 같아. 정리되면 얘기하자."'
+        },
+        tips: {
+          E: '<b>"나도 힘들었어"</b>라고 먼저 말해줘. 감정 단어가 필요해.',
+          S: '<b>가벼운 농담 한 마디</b>로 먼저 분위기 풀어봐. 잘 받아줄 거야.',
+          A: '<b>"우리 괜찮아?"</b> 한 번만 확인해줘. 안심이 필요해.',
+          R: '<b>작은 화해 제스처</b> 하나 — 짧은 영상이든 메시지든.',
+          P: '<b>차분한 자리</b>에서 정리해서 얘기하자고 제안해봐.'
+        }
+      },
+      {
+        situation: '기념일을 깜빡한 걸 들켰어',
+        minds: {
+          E: '"완전 잊었어… 미안하고 부끄러워. 지금이라도 뭔가 해야 하는데."',
+          S: '"아 깜빡! 지금 재밌는 보상 계획하면 되겠지, 내가 잘 수습할게."',
+          A: '"화났을까? 너무 미안한데 어떻게 표현해야 할지 모르겠어…"',
+          R: '"기념일을 잊다니 최악이다. 지금이라도 완벽하게 만들어줄게."',
+          P: '"왜 잊었지. 다음엔 캘린더에 꼭. 지금은 어떻게 해결할지부터."'
+        },
+        tips: {
+          E: '<b>"많이 서운했어"</b>라고 솔직하게 말해. 숨기면 더 힘들어.',
+          S: '<b>"다음에 더 재밌게 보상해줘"</b>라고 하면 신나게 계획할 거야.',
+          A: '<b>"괜찮아, 그래도 같이 있어줘"</b>라고 안심시켜줘.',
+          R: '<b>지금 당장 작은 이벤트</b>라도 해달라고 직접 말해봐.',
+          P: '<b>"다음엔 달력에 넣어줘"</b>라고 구체적으로 알려줘. 잘 실천해.'
+        }
+      },
+      {
+        situation: '내가 친구 만나러 간다고 했더니 살짝 시무룩해졌어',
+        minds: {
+          E: '"서운한 마음이 먼저 드는데… 표현하면 너무 옹졸해 보일 것 같아."',
+          S: '"같이 가면 안 되나? 아니면 끝나고 늦게라도 만날 수 있나?"',
+          A: '"내가 후순위인 것 같아서 살짝 불안해."',
+          R: '"우리만의 시간이 줄어드는 게 아쉬워."',
+          P: '"몇 시까지인지, 우리 일정에 영향 있는지부터 정리하고 싶어."'
+        },
+        tips: {
+          E: '<b>"보고 싶을 거야"</b> 한 마디면 마음이 풀려.',
+          S: '<b>끝나고 짧게라도 통화</b> 약속해줘. 함께한 느낌이 필요해.',
+          A: '<b>"너가 1순위야"</b>라고 분명히 말해줘.',
+          R: '<b>다음 둘만의 약속</b>을 미리 정해줘. 기대할 거리가 필요해.',
+          P: '<b>일정과 시간</b>을 구체적으로 공유해. 정리되면 안심해.'
+        }
+      }
+    ];
+
+    const $ = (id) => document.getElementById(id);
+    let pickedType = null;
+    let scnIdx = 0;
+
+    function showOnly(id) {
+      ['screen-intro','screen-sim','screen-result']
+        .forEach(s => $(s).classList.toggle('hidden', s !== id));
+    }
+    function renderPicks() {
+      const g = $('pick-grid');
+      g.innerHTML = '';
+      ORDER.forEach(t => {
+        const T = TYPES[t];
+        const c = document.createElement('button');
+        c.className = 'pick';
+        c.innerHTML = `<img src="../assets/characters/${T.file}" alt="${T.name}"><div class="name">${T.name}</div><div class="desc">${T.desc}</div>`;
+        c.addEventListener('click', () => choose(t));
+        g.appendChild(c);
+      });
+    }
+    function choose(t) {
+      pickedType = t;
+      gtag('event', 'bf_type_select', { concept_id: CONCEPT_ID, bf_type: t });
+      scnIdx = 0;
+      showOnly('screen-sim');
+      renderScenario();
+    }
+
+    function typewriter(el, text, speed) {
+      el.textContent = '';
+      let i = 0;
+      const timer = setInterval(() => {
+        if (i >= text.length) { clearInterval(timer); return; }
+        el.textContent += text[i++];
+      }, speed || 25);
+      return timer;
+    }
+    let activeTimer = null;
+
+    function renderScenario() {
+      const s = SCENARIOS[scnIdx];
+      $('scn-step').textContent = `상황 ${scnIdx + 1} / ${SCENARIOS.length}`;
+      $('scn-text').textContent = s.situation;
+      const bubble = $('bubble');
+      bubble.innerHTML = '';
+      if (activeTimer) clearInterval(activeTimer);
+      activeTimer = typewriter(bubble, s.minds[pickedType], 22);
+      $('tip').innerHTML = '💡 ' + s.tips[pickedType];
+      $('btn-next').textContent = scnIdx + 1 >= SCENARIOS.length ? '종합 보기 →' : '다음 상황 →';
+    }
+
+    $('btn-next').addEventListener('click', () => {
+      gtag('event', 'scenario_complete', { concept_id: CONCEPT_ID, scenario_idx: scnIdx });
+      scnIdx += 1;
+      if (scnIdx >= SCENARIOS.length) finish();
+      else renderScenario();
+    });
+
+    function finish() {
+      const T = TYPES[pickedType];
+      $('result-img').src = '../assets/characters/' + T.file;
+      $('result-img').alt = T.name;
+      $('result-title').textContent = '남친 = ' + T.name + ' 결';
+      $('result-desc').textContent = T.summary;
+      showOnly('screen-result');
+      if (window.HeartOpenAnalytics) HeartOpenAnalytics.trackResultView(CONCEPT_ID, pickedType);
+    }
+
+    $('btn-share').addEventListener('click', () => {
+      HeartOpenResultCard.shareResult({
+        conceptId: CONCEPT_ID,
+        title: 'Heart Open 남친 머릿속 — ' + $('result-title').textContent,
+        url: location.href
+      });
+    });
+    $('btn-save').addEventListener('click', () => HeartOpenResultCard.saveResult('#result-card'));
+    $('btn-cta').addEventListener('click', () => {
+      if (window.HeartOpenAnalytics) HeartOpenAnalytics.trackCtaClick(CONCEPT_ID, 'app_store');
+    });
+    $('btn-restart').addEventListener('click', () => {
+      pickedType = null; scnIdx = 0;
+      showOnly('screen-intro');
+    });
+
+    if (window.HeartOpenAnalytics) {
+      HeartOpenAnalytics.trackPageView(CONCEPT_ID, CONCEPT_NAME);
+      HeartOpenAnalytics.trackGameStart(CONCEPT_ID, CONCEPT_NAME);
+    }
+    renderPicks();
+  </script>
+</body>
+</html>
