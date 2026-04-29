@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>짝꿍 유형 찾기 — Heart Open</title>
+  <meta name="description" content="3가지 상황으로 나에게 어울리는 짝꿍 타입을 찾아봐 🔍">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+  <link rel="stylesheet" href="../shared/tokens.css">
+  <link rel="stylesheet" href="../shared/result-card.css">
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-2NYTV5FKDC"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){ dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'G-2NYTV5FKDC');
+  </script>
+  <script src="../shared/analytics.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
+  <script src="../shared/result-card.js" defer></script>
+  <style>
+    .stage { padding-top: var(--space-6); text-align: center; }
+    h1 { font-size: 22px; font-weight: 700; }
+    .lead { color: var(--text-secondary); font-size: 14px; margin-top: var(--space-2); line-height: 1.6; }
+    .progress-bar {
+      margin-top: var(--space-4);
+      height: 6px; background: var(--accent-surface); border-radius: var(--radius-pill);
+      overflow: hidden;
+    }
+    .progress-fill { height: 100%; background: var(--primary); transition: width 0.3s; }
+    .progress-label { font-size: 12px; color: var(--text-secondary); font-weight: 600; margin-top: var(--space-2); }
+
+    .scenario {
+      margin-top: var(--space-6);
+      background: var(--card);
+      border-radius: var(--radius-lg);
+      padding: var(--space-6) var(--space-5);
+      box-shadow: var(--shadow-sm);
+    }
+    .scenario-q { font-size: 18px; font-weight: 700; line-height: 1.4; }
+    .options { margin-top: var(--space-5); display: flex; flex-direction: column; gap: var(--space-3); }
+    .option {
+      background: var(--surface-warm);
+      border: 2px solid transparent;
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      transition: transform 0.15s, border-color 0.2s, background 0.2s;
+      text-align: left;
+    }
+    .option:active { transform: scale(0.98); }
+    .option.selected { border-color: var(--primary); background: var(--accent-surface); }
+
+    .start, .cta-restart {
+      margin-top: var(--space-6);
+      width: 100%;
+      background: var(--primary);
+      color: #fff;
+      padding: 16px;
+      font-size: 16px;
+      font-weight: 700;
+      border-radius: var(--radius-pill);
+      box-shadow: var(--shadow-md);
+    }
+    .start:active { transform: scale(0.98); }
+
+    .hidden { display: none !important; }
+
+    @keyframes pop-in { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+    .pop-in { animation: pop-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <section id="screen-intro" class="stage">
+      <h1>나의 짝꿍 유형 🔍</h1>
+      <p class="lead">3가지 상황 답하면<br>나에게 가장 잘 맞는 짝꿍 타입을 알려줄게</p>
+      <button class="start" id="btn-start">시작하기</button>
+    </section>
+
+    <section id="screen-scenario" class="stage hidden">
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%;"></div></div>
+      <div class="progress-label" id="progress-label">1 / 3</div>
+      <div class="scenario">
+        <div class="scenario-q" id="scenario-q"></div>
+        <div class="options" id="options"></div>
+      </div>
+    </section>
+
+    <section id="screen-result" class="stage hidden">
+      <div class="result-card pop-in" id="result-card">
+        <img id="result-img" src="" alt="">
+        <div class="result-title" id="result-title"></div>
+        <div class="result-desc" id="result-desc"></div>
+        <div class="result-actions">
+          <button class="btn-share" id="btn-share">공유</button>
+          <button class="btn-save" id="btn-save">저장</button>
+        </div>
+        <a class="btn-cta" id="btn-cta" href="https://heartopen.app">앱에서 진짜 ESARP 보기 →</a>
+      </div>
+      <button class="cta-restart" id="btn-restart" style="background:transparent;color:var(--text-secondary);box-shadow:none;">다시 해보기</button>
+    </section>
+  </div>
+
+  <script>
+    const CONCEPT_ID = '14';
+    const CONCEPT_NAME = '짝꿍 유형 찾기';
+
+    const SITUATIONS = [
+      { q: '힘든 날 남친한테 바라는 건?', options: [
+        { text: '나도 힘들었어, 알아 💕', type: 'E' },
+        { text: '괜찮아 다 잘 될 거야 ✨', type: 'S' },
+        { text: '그냥 옆에 있어줘 🌙',     type: 'A' },
+        { text: '이렇게 해결해봐 📋',     type: 'P' },
+        { text: '오늘 특별하게 해줄게 🌸', type: 'R' }
+      ]},
+      { q: '갈등이 생겼을 때 원하는 건?', options: [
+        { text: '감정부터 다 털어놓기',     type: 'E' },
+        { text: '웃으면서 화해하기',       type: 'S' },
+        { text: '안아줘서 진정시켜줘',     type: 'A' },
+        { text: '차분하게 대화로 해결',    type: 'P' },
+        { text: '뭔가 특별한 화해 선물',   type: 'R' }
+      ]},
+      { q: '이상적인 주말 데이트는?', options: [
+        { text: '둘이 감성 카페 대화',      type: 'E' },
+        { text: '친구들이랑 같이 놀기',     type: 'S' },
+        { text: '집에서 같이 뒹굴기',       type: 'A' },
+        { text: '미리 계획한 알찬 코스',    type: 'P' },
+        { text: '가본 적 없는 새 장소',     type: 'R' }
+      ]}
+    ];
+
+    const PARTNER_MAP = { E: 'A', S: 'R', A: 'P', P: 'S', R: 'E' };
+    const PARTNER_DESC = {
+      E: { name: '감정형 짝꿍', file: 'emotion.png',    desc: '낭만적인 너에게는 감정에 솔직한 짝꿍이 잘 맞아. 너의 마음을 깊이 공감해줄 거야 💕' },
+      S: { name: '사교형 짝꿍', file: 'social.png',     desc: '계획적인 너에게는 활기차고 유연한 짝꿍이 어울려. 일상에 웃음을 더해줄 사람이야 ✨' },
+      A: { name: '애착형 짝꿍', file: 'attachment.png', desc: '감정 표현이 풍부한 너에게는 안정적이고 받아주는 짝꿍이 필요해. 깊이 안아줄 사람 🌙' },
+      R: { name: '낭만형 짝꿍', file: 'romantic.png',   desc: '에너지 넘치는 너에게는 설레게 해줄 낭만 짝꿍이 어울려. 매일이 특별해질 거야 🌸' },
+      P: { name: '현실형 짝꿍', file: 'practical.png',  desc: '안정 지향인 너에게는 든든한 현실형 짝꿍이 잘 맞아. 함께라면 흔들림 없는 사랑 🌱' }
+    };
+
+    const $ = (id) => document.getElementById(id);
+    let si = 0;
+    const choiceTypes = [];
+
+    function showOnly(id) {
+      ['screen-intro','screen-scenario','screen-result'].forEach(s => $(s).classList.toggle('hidden', s !== id));
+    }
+
+    function renderScenario() {
+      const sit = SITUATIONS[si];
+      $('progress-label').textContent = (si + 1) + ' / ' + SITUATIONS.length;
+      $('progress-fill').style.width = ((si) / SITUATIONS.length * 100) + '%';
+      $('scenario-q').textContent = sit.q;
+      const opts = $('options');
+      opts.innerHTML = '';
+      sit.options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'option';
+        btn.textContent = opt.text;
+        btn.addEventListener('click', () => {
+          btn.classList.add('selected');
+          gtag('event', 'situation_choice', { concept_id: CONCEPT_ID, situation: si + 1, chosen_type: opt.type });
+          choiceTypes.push(opt.type);
+          setTimeout(() => {
+            si++;
+            if (si < SITUATIONS.length) renderScenario();
+            else showResult();
+          }, 280);
+        });
+        opts.appendChild(btn);
+      });
+    }
+
+    function showResult() {
+      $('progress-fill').style.width = '100%';
+      const freq = choiceTypes.reduce((acc, t) => { acc[t] = (acc[t] || 0) + 1; return acc; }, {});
+      const mainNeed = Object.entries(freq).sort((a,b) => b[1]-a[1])[0][0];
+      const partnerType = PARTNER_MAP[mainNeed];
+      const p = PARTNER_DESC[partnerType];
+      $('result-img').src = '../assets/characters/' + p.file;
+      $('result-img').alt = p.name;
+      $('result-title').textContent = '나의 짝꿍은 ' + p.name + '!';
+      $('result-desc').textContent = p.desc;
+      gtag('event', 'partner_revealed', { concept_id: CONCEPT_ID, partner_type: partnerType });
+      if (window.HeartOpenAnalytics) HeartOpenAnalytics.trackResultView(CONCEPT_ID, partnerType);
+      showOnly('screen-result');
+    }
+
+    $('btn-start').addEventListener('click', () => {
+      if (window.HeartOpenAnalytics) {
+        HeartOpenAnalytics.trackPageView(CONCEPT_ID, CONCEPT_NAME);
+        HeartOpenAnalytics.trackGameStart(CONCEPT_ID, CONCEPT_NAME);
+      }
+      si = 0; choiceTypes.length = 0;
+      renderScenario();
+      showOnly('screen-scenario');
+    });
+
+    $('btn-share').addEventListener('click', () => {
+      HeartOpenResultCard.shareResult({
+        conceptId: CONCEPT_ID,
+        title: 'Heart Open 짝꿍 유형 — ' + $('result-title').textContent,
+        url: location.href
+      });
+    });
+    $('btn-save').addEventListener('click', () => HeartOpenResultCard.saveResult('#result-card'));
+    $('btn-cta').addEventListener('click', () => {
+      if (window.HeartOpenAnalytics) HeartOpenAnalytics.trackCtaClick(CONCEPT_ID, 'app_store');
+    });
+    $('btn-restart').addEventListener('click', () => showOnly('screen-intro'));
+  </script>
+</body>
+</html>

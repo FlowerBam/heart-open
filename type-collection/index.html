@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>5유형 카드 콜렉션 — Heart Open</title>
+  <meta name="description" content="5문제 풀어 ESARP 5유형 카드를 다 모아봐 🎴">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+  <link rel="stylesheet" href="../shared/tokens.css">
+  <link rel="stylesheet" href="../shared/result-card.css">
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-2NYTV5FKDC"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){ dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'G-2NYTV5FKDC');
+  </script>
+  <script src="../shared/analytics.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
+  <script src="../shared/result-card.js" defer></script>
+  <style>
+    .stage { padding-top: var(--space-6); text-align: center; }
+    h1 { font-size: 22px; font-weight: 700; }
+    .lead { color: var(--text-secondary); font-size: 14px; margin-top: var(--space-2); line-height: 1.6; }
+    .progress-label { color: var(--primary-dark); font-size: 12px; font-weight: 700; margin-top: var(--space-4); }
+
+    .question-card {
+      margin-top: var(--space-5);
+      background: var(--card);
+      border-radius: var(--radius-lg);
+      padding: var(--space-6) var(--space-4);
+      box-shadow: var(--shadow-md);
+    }
+    .q-text { font-size: 18px; font-weight: 700; }
+    .q-options { margin-top: var(--space-5); display: flex; flex-direction: column; gap: var(--space-3); }
+    .q-opt {
+      background: var(--surface-warm);
+      border: 2px solid transparent;
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+      font-size: 14px;
+      font-weight: 600;
+      transition: transform 0.15s, border-color 0.2s, background 0.2s;
+    }
+    .q-opt:active { transform: scale(0.97); }
+
+    .card-row {
+      margin-top: var(--space-5);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+    }
+    .mini-card {
+      width: 56px; height: 80px;
+      border-radius: 8px;
+      background: var(--accent-surface);
+      display: flex; align-items: center; justify-content: center;
+      perspective: 600px;
+      position: relative;
+    }
+    .mini-card.collected {
+      background: var(--card);
+      box-shadow: var(--shadow-md);
+    }
+    .mini-card img { width: 44px; height: 44px; object-fit: contain; }
+    .mini-card .placeholder {
+      font-size: 22px; opacity: 0.5;
+    }
+
+    .start, .cta-restart {
+      margin-top: var(--space-6);
+      width: 100%;
+      background: var(--primary);
+      color: #fff;
+      padding: 16px;
+      font-size: 16px;
+      font-weight: 700;
+      border-radius: var(--radius-pill);
+      box-shadow: var(--shadow-md);
+    }
+    .start:active { transform: scale(0.98); }
+
+    .reveal-card {
+      margin-top: var(--space-4);
+      background: var(--card);
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+      box-shadow: var(--shadow-sm);
+      display: inline-flex; align-items: center; gap: var(--space-3);
+    }
+    .reveal-card img { width: 48px; height: 48px; }
+    .reveal-name { font-weight: 700; font-size: 15px; }
+
+    .full-cards {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+      margin: var(--space-3) 0;
+      width: 100%;
+    }
+    .full-cards .mini-card {
+      width: 100%; height: 64px;
+    }
+    .glow .mini-card {
+      animation: glow 1.4s ease-in-out infinite alternate;
+    }
+    @keyframes glow {
+      from { box-shadow: 0 0 4px var(--primary); }
+      to   { box-shadow: 0 0 16px var(--primary); }
+    }
+
+    .hidden { display: none !important; }
+
+    @keyframes pop-in { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+    .pop-in { animation: pop-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    @keyframes flip-in {
+      from { transform: rotateY(180deg); opacity: 0; }
+      to   { transform: rotateY(0deg); opacity: 1; }
+    }
+    .flip-in { animation: flip-in 0.5s ease-out; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <section id="screen-intro" class="stage">
+      <h1>5유형 카드 콜렉션 🎴</h1>
+      <p class="lead">5문제 풀고 ESARP 카드 5장을<br>다 모을 수 있는지 도전!</p>
+      <button class="start" id="btn-start">시작하기</button>
+    </section>
+
+    <section id="screen-game" class="stage hidden">
+      <div class="progress-label" id="progress-label">1 / 5</div>
+      <div class="question-card">
+        <div class="q-text" id="q-text"></div>
+        <div class="q-options">
+          <button class="q-opt" id="opt-a"></button>
+          <button class="q-opt" id="opt-b"></button>
+        </div>
+      </div>
+      <div class="card-row" id="card-row"></div>
+      <div id="reveal-slot"></div>
+    </section>
+
+    <section id="screen-result" class="stage hidden">
+      <div class="result-card pop-in" id="result-card">
+        <div style="font-size:14px;color:var(--text-secondary);font-weight:600;" id="collection-count">5/5 모음</div>
+        <div class="full-cards glow" id="full-cards"></div>
+        <img id="result-img" src="" alt="">
+        <div class="result-title" id="result-title"></div>
+        <div class="result-desc" id="result-desc"></div>
+        <div class="result-actions">
+          <button class="btn-share" id="btn-share">공유</button>
+          <button class="btn-save" id="btn-save">저장</button>
+        </div>
+        <a class="btn-cta" id="btn-cta" href="https://heartopen.app">앱에서 ESARP 자세히 보기 →</a>
+      </div>
+      <button class="cta-restart" id="btn-restart" style="background:transparent;color:var(--text-secondary);box-shadow:none;">다시 해보기</button>
+    </section>
+  </div>
+
+  <script>
+    const CONCEPT_ID = '08';
+    const CONCEPT_NAME = '5유형 카드 콜렉션';
+
+    const QUESTIONS = [
+      { text: '연락 스타일?',     a: '하루종일 대화',         b: '중요할 때만',       types: { a: 'E', b: 'P' } },
+      { text: '기념일 선물?',     a: '깜짝 이벤트',           b: '원하는 거 물어보고', types: { a: 'R', b: 'P' } },
+      { text: '싸운 후 화해?',    a: '바로 안아줘',           b: '편하게 얘기해',     types: { a: 'A', b: 'E' } },
+      { text: '주말 계획?',       a: '친구들이랑 같이',       b: '둘만의 시간',       types: { a: 'S', b: 'A' } },
+      { text: '좋아하는 데이트?', a: '설레는 새 장소',        b: '우리만의 단골집',   types: { a: 'R', b: 'S' } }
+    ];
+
+    const TYPES = {
+      E: { name: '감정', file: 'emotion.png',    desc: '감정에 솔직한 사랑을 해' },
+      S: { name: '사교', file: 'social.png',     desc: '활기찬 에너지로 빛나는 사람' },
+      A: { name: '애착', file: 'attachment.png', desc: '안정과 신뢰를 사랑하는 사람' },
+      R: { name: '낭만', file: 'romantic.png',   desc: '설레는 순간을 사랑해' },
+      P: { name: '현실', file: 'practical.png',  desc: '실용적이고 단단한 연애를 해' }
+    };
+    const ORDER = ['E','S','A','R','P'];
+
+    const $ = (id) => document.getElementById(id);
+    let qi = 0;
+    const collectedTypes = []; // including duplicates
+
+    function showOnly(id) {
+      ['screen-intro','screen-game','screen-result'].forEach(s => $(s).classList.toggle('hidden', s !== id));
+    }
+
+    function renderRow() {
+      const row = $('card-row');
+      row.innerHTML = '';
+      ORDER.forEach(type => {
+        const c = document.createElement('div');
+        c.className = 'mini-card';
+        c.dataset.type = type;
+        if (collectedTypes.includes(type)) {
+          c.classList.add('collected');
+          c.innerHTML = '<img src="../assets/characters/' + TYPES[type].file + '" alt="' + TYPES[type].name + '">';
+        } else {
+          c.innerHTML = '<span class="placeholder">?</span>';
+        }
+        row.appendChild(c);
+      });
+    }
+
+    function renderQ() {
+      const q = QUESTIONS[qi];
+      $('progress-label').textContent = (qi + 1) + ' / 5';
+      $('q-text').textContent = q.text;
+      $('opt-a').textContent = q.a;
+      $('opt-b').textContent = q.b;
+      $('reveal-slot').innerHTML = '';
+      renderRow();
+    }
+
+    function pick(choice) {
+      const q = QUESTIONS[qi];
+      const type = q.types[choice];
+      const wasNew = !collectedTypes.includes(type);
+      collectedTypes.push(type);
+      gtag('event', 'card_earned', { concept_id: CONCEPT_ID, card_type: type, question_idx: qi + 1 });
+      renderRow();
+      const slot = document.querySelector('.mini-card[data-type="' + type + '"]');
+      if (slot) {
+        slot.classList.add('flip-in');
+        setTimeout(() => slot.classList.remove('flip-in'), 600);
+      }
+      const reveal = document.createElement('div');
+      reveal.className = 'reveal-card flip-in';
+      reveal.innerHTML = '<img src="../assets/characters/' + TYPES[type].file + '"><span class="reveal-name">' + (wasNew ? '+ ' : '') + TYPES[type].name + ' 카드 획득!' + '</span>';
+      $('reveal-slot').appendChild(reveal);
+
+      setTimeout(() => {
+        qi++;
+        if (qi < QUESTIONS.length) renderQ();
+        else showResult();
+      }, 800);
+    }
+
+    function showResult() {
+      const freq = collectedTypes.reduce((acc, t) => { acc[t] = (acc[t] || 0) + 1; return acc; }, {});
+      const sorted = Object.entries(freq).sort((a,b) => b[1]-a[1]);
+      const main = sorted[0][0];
+      const second = sorted[1] && sorted[1][0];
+      const t = TYPES[main];
+
+      const uniqueCount = Object.keys(freq).length;
+      $('collection-count').textContent = uniqueCount + '/5 카드 수집';
+      const fc = $('full-cards');
+      fc.innerHTML = '';
+      ORDER.forEach(type => {
+        const c = document.createElement('div');
+        c.className = 'mini-card' + (freq[type] ? ' collected' : '');
+        if (freq[type]) {
+          c.innerHTML = '<img src="../assets/characters/' + TYPES[type].file + '" alt="' + TYPES[type].name + '">';
+        } else {
+          c.innerHTML = '<span class="placeholder">?</span>';
+        }
+        fc.appendChild(c);
+      });
+      $('result-img').src = '../assets/characters/' + t.file;
+      $('result-img').alt = t.name + ' 타입';
+      $('result-title').textContent = '나는 ' + t.name + ' 성향!';
+      let desc = t.desc;
+      if (second) desc += ' (' + TYPES[second].name + ' 기질도 있어)';
+      $('result-desc').textContent = desc;
+
+      gtag('event', 'collection_complete', { concept_id: CONCEPT_ID, main_type: main });
+      if (window.HeartOpenAnalytics) HeartOpenAnalytics.trackResultView(CONCEPT_ID, main);
+      showOnly('screen-result');
+    }
+
+    $('btn-start').addEventListener('click', () => {
+      if (window.HeartOpenAnalytics) {
+        HeartOpenAnalytics.trackPageView(CONCEPT_ID, CONCEPT_NAME);
+        HeartOpenAnalytics.trackGameStart(CONCEPT_ID, CONCEPT_NAME);
+      }
+      qi = 0; collectedTypes.length = 0;
+      renderQ();
+      showOnly('screen-game');
+    });
+    $('opt-a').addEventListener('click', () => pick('a'));
+    $('opt-b').addEventListener('click', () => pick('b'));
+
+    $('btn-share').addEventListener('click', () => {
+      HeartOpenResultCard.shareResult({
+        conceptId: CONCEPT_ID,
+        title: 'Heart Open 5유형 콜렉션 — ' + $('result-title').textContent,
+        url: location.href
+      });
+    });
+    $('btn-save').addEventListener('click', () => HeartOpenResultCard.saveResult('#result-card'));
+    $('btn-cta').addEventListener('click', () => {
+      if (window.HeartOpenAnalytics) HeartOpenAnalytics.trackCtaClick(CONCEPT_ID, 'app_store');
+    });
+    $('btn-restart').addEventListener('click', () => showOnly('screen-intro'));
+  </script>
+</body>
+</html>

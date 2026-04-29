@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>커플 밸런스 점수판 — Heart Open</title>
+  <meta name="description" content="5라운드 밸런스 게임으로 우리 커플 점수 공개 ⚖️">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+  <link rel="stylesheet" href="../shared/tokens.css">
+  <link rel="stylesheet" href="../shared/result-card.css">
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-2NYTV5FKDC"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){ dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'G-2NYTV5FKDC');
+  </script>
+  <script src="../shared/analytics.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
+  <script src="../shared/result-card.js" defer></script>
+  <style>
+    .stage { padding-top: var(--space-6); text-align: center; }
+    h1 { font-size: 22px; font-weight: 700; }
+    .lead { color: var(--text-secondary); font-size: 14px; margin-top: var(--space-2); line-height: 1.6; }
+    .progress-label { color: var(--primary-dark); font-size: 12px; font-weight: 700; margin-top: var(--space-4); }
+
+    .balance-card {
+      margin-top: var(--space-5);
+      background: var(--card);
+      border-radius: var(--radius-lg);
+      padding: var(--space-6) var(--space-4);
+      box-shadow: var(--shadow-md);
+      transition: transform 0.4s, opacity 0.4s;
+    }
+    .balance-q { font-size: 18px; font-weight: 700; line-height: 1.4; }
+    .balance-row {
+      margin-top: var(--space-5);
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: var(--space-3);
+    }
+    .balance-side {
+      background: var(--surface-warm);
+      border: 2px solid transparent;
+      border-radius: var(--radius-md);
+      padding: var(--space-5) var(--space-3);
+      font-size: 14px;
+      font-weight: 700;
+      transition: transform 0.15s, border-color 0.2s, background 0.2s;
+    }
+    .balance-side:active { transform: scale(0.97); }
+    .vs { font-weight: 800; color: var(--primary); font-size: 14px; }
+
+    .start, .cta-restart {
+      margin-top: var(--space-6);
+      width: 100%;
+      background: var(--primary);
+      color: #fff;
+      padding: 16px;
+      font-size: 16px;
+      font-weight: 700;
+      border-radius: var(--radius-pill);
+      box-shadow: var(--shadow-md);
+    }
+    .start:active { transform: scale(0.98); }
+
+    @keyframes tilt-left  { to { transform: rotate(-10deg); opacity: 0; } }
+    @keyframes tilt-right { to { transform: rotate( 10deg); opacity: 0; } }
+    .tilt-left  { animation: tilt-left  0.4s ease-in forwards; }
+    .tilt-right { animation: tilt-right 0.4s ease-in forwards; }
+
+    .gauge-wrap { position: relative; width: 200px; height: 200px; margin: 0 auto; }
+    .gauge-text {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 44px; font-weight: 800; color: var(--primary-dark);
+    }
+
+    .hidden { display: none !important; }
+
+    @keyframes pop-in { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+    .pop-in { animation: pop-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <section id="screen-intro" class="stage">
+      <h1>커플 밸런스 점수판 ⚖️</h1>
+      <p class="lead">5라운드 양자택일로<br>우리 커플 밸런스 점수를 공개해줄게</p>
+      <button class="start" id="btn-start">시작하기</button>
+    </section>
+
+    <section id="screen-game" class="stage hidden">
+      <div class="progress-label" id="progress-label">1 / 5</div>
+      <div class="balance-card" id="balance-card">
+        <div class="balance-q" id="balance-q"></div>
+        <div class="balance-row">
+          <button class="balance-side" id="side-left"></button>
+          <span class="vs">VS</span>
+          <button class="balance-side" id="side-right"></button>
+        </div>
+      </div>
+    </section>
+
+    <section id="screen-result" class="stage hidden">
+      <div class="result-card pop-in" id="result-card">
+        <div class="gauge-wrap">
+          <svg width="200" height="200" viewBox="0 0 200 200">
+            <circle cx="100" cy="100" r="86" fill="none" stroke="var(--accent-surface)" stroke-width="14"/>
+            <circle id="gauge-arc" cx="100" cy="100" r="86" fill="none" stroke="var(--primary)" stroke-width="14" stroke-linecap="round"
+                    stroke-dasharray="540" stroke-dashoffset="540" transform="rotate(-90 100 100)"/>
+          </svg>
+          <div class="gauge-text" id="gauge-text">0</div>
+        </div>
+        <img id="result-img" src="" alt="">
+        <div class="result-title" id="result-title"></div>
+        <div class="result-desc" id="result-desc"></div>
+        <div class="result-actions">
+          <button class="btn-share" id="btn-share">공유</button>
+          <button class="btn-save" id="btn-save">저장</button>
+        </div>
+        <a class="btn-cta" id="btn-cta" href="https://heartopen.app">앱에서 더 자세한 호환성 →</a>
+      </div>
+      <button class="cta-restart" id="btn-restart" style="background:transparent;color:var(--text-secondary);box-shadow:none;">다시 해보기</button>
+    </section>
+  </div>
+
+  <script>
+    const CONCEPT_ID = '20';
+    const CONCEPT_NAME = '커플 밸런스 점수판';
+
+    const QUESTIONS = [
+      { text: '연애에서 더 중요한 건?',  left: { label: '감정 공유 💕',     type: 'E' }, right: { label: '서로의 공간 🌿', type: 'P' } },
+      { text: '주말 데이트 스타일?',    left: { label: '활기차게 나가기 ✨', type: 'S' }, right: { label: '집에서 같이 쉬기 🏠', type: 'A' } },
+      { text: '연락 주기?',             left: { label: '하루종일 수다 💬',   type: 'E' }, right: { label: '중요할 때만 연락 📱', type: 'P' } },
+      { text: '기념일 챙기는 방식?',     left: { label: '깜짝 이벤트 🎉',     type: 'R' }, right: { label: '원하는 거 물어보고 🎁', type: 'P' } },
+      { text: '싸운 후 화해 방법?',     left: { label: '빨리 안아주기 🤗',   type: 'A' }, right: { label: '충분히 대화한 후에 🗣️', type: 'E' } }
+    ];
+
+    const COUPLE_TYPES = {
+      E: { name: '감성 커플', file: 'emotion.png',    desc: '감정 교류가 풍부한 커플이야. 서로의 마음을 잘 알고 있어 ✨' },
+      S: { name: '활기찬 커플', file: 'social.png',   desc: '에너지 넘치는 커플이야. 함께 있으면 항상 즐거워 ✨' },
+      A: { name: '안정적인 커플', file: 'attachment.png', desc: '신뢰가 탄탄한 커플이야. 서로에게 최고의 안식처야 ✨' },
+      R: { name: '낭만 커플', file: 'romantic.png',   desc: '설레는 순간을 중요하게 여기는 커플이야. 아름답고 특별해 ✨' },
+      P: { name: '현실적인 커플', file: 'practical.png', desc: '서로를 존중하는 현실적인 커플이야. 함께하면 든든해 ✨' }
+    };
+
+    const $ = (id) => document.getElementById(id);
+    let qi = 0;
+    const choices = []; // 'left' | 'right'
+
+    function showOnly(id) {
+      ['screen-intro','screen-game','screen-result'].forEach(s => $(s).classList.toggle('hidden', s !== id));
+    }
+
+    function renderQ() {
+      const q = QUESTIONS[qi];
+      $('progress-label').textContent = (qi + 1) + ' / 5';
+      $('balance-q').textContent = q.text;
+      $('side-left').textContent = q.left.label;
+      $('side-right').textContent = q.right.label;
+      const card = $('balance-card');
+      card.classList.remove('tilt-left', 'tilt-right');
+      card.style.transform = 'rotate(0deg)';
+      card.style.opacity = '1';
+    }
+
+    function pickSide(side) {
+      const card = $('balance-card');
+      card.classList.add(side === 'left' ? 'tilt-left' : 'tilt-right');
+      gtag('event', 'round_complete', { concept_id: CONCEPT_ID, round: qi + 1, choice: side });
+      choices.push(side);
+      setTimeout(() => {
+        qi++;
+        if (qi < QUESTIONS.length) renderQ();
+        else showResult();
+      }, 420);
+    }
+
+    function showResult() {
+      const leftCount = choices.filter(c => c === 'left').length;
+      const rightCount = choices.length - leftCount;
+      const balance = Math.abs(leftCount - rightCount);
+      const score = 100 - balance * 8;
+      const types = choices.map((c, i) => QUESTIONS[i][c].type);
+      const freq = types.reduce((acc, t) => { acc[t] = (acc[t] || 0) + 1; return acc; }, {});
+      const mainType = Object.entries(freq).sort((a,b) => b[1]-a[1])[0][0];
+      const couple = COUPLE_TYPES[mainType];
+
+      $('result-img').src = '../assets/characters/' + couple.file;
+      $('result-img').alt = couple.name;
+      $('result-title').textContent = couple.name + ' (' + score + '점)';
+      $('result-desc').textContent = couple.desc;
+
+      // gauge animation
+      const arc = document.getElementById('gauge-arc');
+      const circumference = 540; // 2πr ≈ 2*π*86
+      const offset = circumference * (1 - score / 100);
+      const txt = $('gauge-text');
+      let cur = 0;
+      const up = setInterval(() => {
+        cur = Math.min(cur + 2, score);
+        txt.textContent = cur;
+        if (cur >= score) clearInterval(up);
+      }, 30);
+      setTimeout(() => {
+        arc.style.transition = 'stroke-dashoffset 1.2s ease-out';
+        arc.setAttribute('stroke-dashoffset', offset);
+      }, 100);
+
+      gtag('event', 'balance_result', { concept_id: CONCEPT_ID, score: score, couple_type: mainType });
+      if (window.HeartOpenAnalytics) HeartOpenAnalytics.trackResultView(CONCEPT_ID, mainType);
+      showOnly('screen-result');
+    }
+
+    $('side-left').addEventListener('click', () => pickSide('left'));
+    $('side-right').addEventListener('click', () => pickSide('right'));
+
+    $('btn-start').addEventListener('click', () => {
+      if (window.HeartOpenAnalytics) {
+        HeartOpenAnalytics.trackPageView(CONCEPT_ID, CONCEPT_NAME);
+        HeartOpenAnalytics.trackGameStart(CONCEPT_ID, CONCEPT_NAME);
+      }
+      qi = 0; choices.length = 0;
+      renderQ();
+      showOnly('screen-game');
+    });
+
+    $('btn-share').addEventListener('click', () => {
+      HeartOpenResultCard.shareResult({
+        conceptId: CONCEPT_ID,
+        title: 'Heart Open 커플 밸런스 — ' + $('result-title').textContent,
+        url: location.href
+      });
+    });
+    $('btn-save').addEventListener('click', () => HeartOpenResultCard.saveResult('#result-card'));
+    $('btn-cta').addEventListener('click', () => {
+      if (window.HeartOpenAnalytics) HeartOpenAnalytics.trackCtaClick(CONCEPT_ID, 'app_store');
+    });
+    $('btn-restart').addEventListener('click', () => {
+      const arc = document.getElementById('gauge-arc');
+      arc.style.transition = 'none';
+      arc.setAttribute('stroke-dashoffset', '540');
+      $('gauge-text').textContent = '0';
+      showOnly('screen-intro');
+    });
+  </script>
+</body>
+</html>

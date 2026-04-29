@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>오늘의 연인 룰렛 — Heart Open</title>
+  <meta name="description" content="오늘 내 연인 타입을 룰렛으로 뽑아봐 🎰">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+  <link rel="stylesheet" href="../shared/tokens.css">
+  <link rel="stylesheet" href="../shared/result-card.css">
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-2NYTV5FKDC"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){ dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'G-2NYTV5FKDC');
+  </script>
+  <script src="../shared/analytics.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
+  <script src="../shared/result-card.js" defer></script>
+  <style>
+    .stage { padding-top: var(--space-6); text-align: center; }
+    h1 { font-size: 22px; font-weight: 700; }
+    .lead { color: var(--text-secondary); font-size: 14px; margin-top: var(--space-2); line-height: 1.6; }
+
+    .wheel-wrap {
+      position: relative;
+      margin: var(--space-8) auto var(--space-4);
+      width: 300px; height: 300px;
+    }
+    canvas#wheel {
+      width: 300px; height: 300px;
+      will-change: transform;
+      transition: transform 3.5s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+    }
+    .pointer {
+      position: absolute;
+      top: -8px; left: 50%; transform: translateX(-50%);
+      width: 0; height: 0;
+      border-left: 14px solid transparent;
+      border-right: 14px solid transparent;
+      border-top: 22px solid var(--primary-dark);
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+    }
+    .spin-btn, .start, .cta-restart {
+      margin-top: var(--space-4);
+      width: 100%;
+      background: var(--primary);
+      color: #fff;
+      padding: 16px;
+      font-size: 16px;
+      font-weight: 700;
+      border-radius: var(--radius-pill);
+      box-shadow: var(--shadow-md);
+    }
+    .spin-btn:disabled { opacity: 0.5; box-shadow: none; }
+    .stat-line {
+      margin-top: var(--space-3);
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+    .stat-note {
+      margin-top: var(--space-2);
+      font-size: 11px;
+      color: var(--text-secondary);
+      opacity: 0.7;
+    }
+
+    .hidden { display: none !important; }
+
+    @keyframes pop-in { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+    .pop-in { animation: pop-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <section id="screen-roulette" class="stage">
+      <h1>오늘의 연인 룰렛 🎰</h1>
+      <p class="lead">버튼 누르면 오늘 너의 연인 타입을<br>룰렛이 뽑아줘</p>
+      <div class="wheel-wrap">
+        <canvas id="wheel" width="600" height="600"></canvas>
+        <div class="pointer"></div>
+      </div>
+      <button class="spin-btn" id="btn-spin">돌려!</button>
+      <div class="stat-line" id="spin-count">오늘 0/3 회</div>
+    </section>
+
+    <section id="screen-result" class="stage hidden">
+      <div class="result-card pop-in" id="result-card">
+        <img id="result-img" src="" alt="">
+        <div class="result-title" id="result-title"></div>
+        <div class="result-desc" id="result-desc"></div>
+        <div class="stat-line" id="stat-line"></div>
+        <div class="stat-note">* 통계는 GA4 집계 전 시뮬레이션 값이에요</div>
+        <div class="result-actions">
+          <button class="btn-share" id="btn-share">공유</button>
+          <button class="btn-save" id="btn-save">저장</button>
+        </div>
+        <a class="btn-cta" id="btn-cta" href="https://heartopen.app">앱에서 더 알아보기 →</a>
+      </div>
+      <button class="cta-restart" id="btn-again" style="background:transparent;color:var(--text-secondary);box-shadow:none;">다시 돌리기</button>
+    </section>
+  </div>
+
+  <script>
+    const CONCEPT_ID = '10';
+    const CONCEPT_NAME = '오늘의 연인 룰렛';
+
+    const SECTORS = [
+      { type: 'E', color: '#FF6F91', label: '감정형', img: 'emotion.png',    msg: '오늘은 감정에 솔직한 하루! 남친한테 먼저 표현해봐 💕' },
+      { type: 'S', color: '#FFB347', label: '사교형', img: 'social.png',     msg: '오늘은 주변을 밝혀주는 타입! 신나게 보내봐 🎉' },
+      { type: 'A', color: '#C3B1E1', label: '애착형', img: 'attachment.png', msg: '오늘은 안정을 원하는 날! 편안하게 있어봐 🌙' },
+      { type: 'R', color: '#FF9EC4', label: '낭만형', img: 'romantic.png',   msg: '오늘은 낭만적인 날! 설레는 뭔가 해봐 🌸' },
+      { type: 'P', color: '#82C09A', label: '현실형', img: 'practical.png',  msg: '오늘은 현실적인 날! 차분히 계획 세워봐 📋' }
+    ];
+    const STATS = { E: 28, S: 22, A: 25, R: 15, P: 10 };
+    const SPIN_LIMIT = 3;
+    const TODAY_KEY = 'heartopen.roulette.' + new Date().toISOString().slice(0, 10);
+
+    const $ = (id) => document.getElementById(id);
+    const wheelEl = $('wheel');
+    let spinning = false;
+    let spinCount = parseInt(localStorage.getItem(TODAY_KEY) || '0', 10);
+
+    function drawWheel() {
+      const ctx = wheelEl.getContext('2d');
+      const cx = 300, cy = 300, r = 280;
+      const arc = (2 * Math.PI) / SECTORS.length;
+      ctx.clearRect(0, 0, 600, 600);
+      SECTORS.forEach((sector, i) => {
+        const start = i * arc - Math.PI / 2;
+        const end = start + arc;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.arc(cx, cy, r, start, end);
+        ctx.fillStyle = sector.color;
+        ctx.fill();
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 4;
+        ctx.stroke();
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(start + arc / 2);
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 22px Pretendard, sans-serif';
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(sector.label, r - 24, 0);
+        ctx.restore();
+      });
+    }
+
+    function updateSpinCount() {
+      $('spin-count').textContent = '오늘 ' + spinCount + '/' + SPIN_LIMIT + ' 회';
+      $('btn-spin').disabled = spinCount >= SPIN_LIMIT;
+    }
+
+    function spin() {
+      if (spinning || spinCount >= SPIN_LIMIT) return;
+      spinning = true;
+      const targetIndex = Math.floor(Math.random() * SECTORS.length);
+      const sector = SECTORS[targetIndex];
+      const sectorAngle = 360 / SECTORS.length;
+      const center = targetIndex * sectorAngle + sectorAngle / 2;
+      const totalDeg = 360 * 5 + (360 - center);
+      wheelEl.style.transform = 'rotate(' + totalDeg + 'deg)';
+      gtag('event', 'roulette_spin', { concept_id: CONCEPT_ID, result_type: sector.type, spin_count: spinCount + 1 });
+      setTimeout(() => {
+        spinning = false;
+        spinCount++;
+        localStorage.setItem(TODAY_KEY, String(spinCount));
+        if (navigator.vibrate) navigator.vibrate(200);
+        showResult(sector);
+      }, 3600);
+    }
+
+    function showResult(sector) {
+      $('result-img').src = '../assets/characters/' + sector.img;
+      $('result-img').alt = sector.label;
+      $('result-title').textContent = '오늘은 ' + sector.label + '!';
+      $('result-desc').textContent = sector.msg;
+      $('stat-line').textContent = '오늘 ' + STATS[sector.type] + '%가 같은 타입이래';
+      ['screen-roulette','screen-result'].forEach(s => $(s).classList.toggle('hidden', s !== 'screen-result'));
+      if (window.HeartOpenAnalytics) HeartOpenAnalytics.trackResultView(CONCEPT_ID, sector.type);
+    }
+
+    drawWheel();
+    updateSpinCount();
+    if (window.HeartOpenAnalytics) {
+      // page_view fires once on load via the gtag config; helper kept consistent for parity
+      window.addEventListener('load', () => HeartOpenAnalytics.trackPageView(CONCEPT_ID, CONCEPT_NAME));
+    }
+
+    $('btn-spin').addEventListener('click', () => {
+      if (window.HeartOpenAnalytics) HeartOpenAnalytics.trackGameStart(CONCEPT_ID, CONCEPT_NAME);
+      spin();
+    });
+
+    $('btn-share').addEventListener('click', () => {
+      HeartOpenResultCard.shareResult({
+        conceptId: CONCEPT_ID,
+        title: 'Heart Open 오늘의 연인 — ' + $('result-title').textContent,
+        url: location.href
+      });
+    });
+    $('btn-save').addEventListener('click', () => HeartOpenResultCard.saveResult('#result-card'));
+    $('btn-cta').addEventListener('click', () => {
+      if (window.HeartOpenAnalytics) HeartOpenAnalytics.trackCtaClick(CONCEPT_ID, 'app_store');
+    });
+    $('btn-again').addEventListener('click', () => {
+      ['screen-roulette','screen-result'].forEach(s => $(s).classList.toggle('hidden', s !== 'screen-roulette'));
+      updateSpinCount();
+    });
+  </script>
+</body>
+</html>

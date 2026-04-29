@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>가상 데이트 코스 — Heart Open</title>
+  <meta name="description" content="3번 선택으로 나만의 이상적인 데이트 코스 완성 🌸">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+  <link rel="stylesheet" href="../shared/tokens.css">
+  <link rel="stylesheet" href="../shared/result-card.css">
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-2NYTV5FKDC"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){ dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'G-2NYTV5FKDC');
+  </script>
+  <script src="../shared/analytics.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
+  <script src="../shared/result-card.js" defer></script>
+  <style>
+    .stage { padding-top: var(--space-6); text-align: center; }
+    h1 { font-size: 22px; font-weight: 700; }
+    .lead { color: var(--text-secondary); font-size: 14px; margin-top: var(--space-2); line-height: 1.6; }
+    .step-indicator { color: var(--primary-dark); font-size: 12px; font-weight: 700; margin-top: var(--space-4); }
+    .step-q { font-size: 18px; font-weight: 700; margin-top: var(--space-3); }
+    .choices {
+      margin-top: var(--space-6);
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--space-3);
+    }
+    .choice {
+      background: var(--card);
+      border: 2px solid transparent;
+      border-radius: var(--radius-md);
+      padding: var(--space-4) var(--space-3);
+      box-shadow: var(--shadow-sm);
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      transition: transform 0.15s ease, border-color 0.2s ease, background 0.2s ease;
+    }
+    .choice:active { transform: scale(0.97); }
+    .choice.selected { border-color: var(--primary); background: var(--accent-surface); }
+
+    .start, .cta-restart {
+      margin-top: var(--space-6);
+      width: 100%;
+      background: var(--primary);
+      color: #fff;
+      padding: 16px;
+      font-size: 16px;
+      font-weight: 700;
+      border-radius: var(--radius-pill);
+      box-shadow: var(--shadow-md);
+    }
+    .start:active { transform: scale(0.98); }
+
+    .course-list { width: 100%; display: flex; flex-direction: column; gap: var(--space-3); margin-top: var(--space-2); }
+    .course-step {
+      background: var(--surface-warm);
+      border-radius: var(--radius-md);
+      padding: var(--space-3) var(--space-4);
+      display: flex; align-items: center; gap: var(--space-3);
+      text-align: left;
+    }
+    .step-num {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--primary); color: #fff; font-weight: 700; font-size: 13px;
+      display: inline-flex; align-items: center; justify-content: center; flex: 0 0 28px;
+    }
+    .step-text { font-size: 14px; line-height: 1.4; }
+
+    .hidden { display: none !important; }
+
+    @keyframes slideIn { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    .slide-in { animation: slideIn 0.3s ease-out; }
+    @keyframes pop-in { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+    .pop-in { animation: pop-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <section id="screen-intro" class="stage">
+      <h1>오늘 완벽한 데이트 코스 🌸</h1>
+      <p class="lead">3번만 선택하면<br>나에게 어울리는 데이트 코스가 완성돼</p>
+      <button class="start" id="btn-start">시작하기</button>
+    </section>
+
+    <section id="screen-step" class="stage hidden">
+      <div class="step-indicator" id="step-indicator">1 / 3</div>
+      <div class="step-q" id="step-q"></div>
+      <div class="choices" id="choices"></div>
+    </section>
+
+    <section id="screen-result" class="stage hidden">
+      <div class="result-card pop-in" id="result-card">
+        <img id="result-img" src="" alt="">
+        <div class="result-title" id="result-title"></div>
+        <div class="course-list" id="course-list"></div>
+        <div class="result-desc" id="result-desc"></div>
+        <div class="result-actions">
+          <button class="btn-share" id="btn-share">공유</button>
+          <button class="btn-save" id="btn-save">저장</button>
+        </div>
+        <a class="btn-cta" id="btn-cta" href="https://heartopen.app">앱에서 더 많은 코스 보기 →</a>
+      </div>
+      <button class="cta-restart" id="btn-restart" style="background:transparent;color:var(--text-secondary);box-shadow:none;">다시 만들기</button>
+    </section>
+  </div>
+
+  <script>
+    const CONCEPT_ID = '17';
+    const CONCEPT_NAME = '가상 데이트 코스';
+
+    const STEPS = [
+      { q: '언제가 좋아?', key: 'time', options: [
+        { id: 'afternoon', label: '낮 ☀️' },
+        { id: 'evening',   label: '저녁 🌆' },
+        { id: 'night',     label: '밤 🌙' }
+      ]},
+      { q: '어떤 분위기?', key: 'mood', options: [
+        { id: 'romantic', label: '감성적 🌸' },
+        { id: 'lively',   label: '활기찬 ✨' },
+        { id: 'cozy',     label: '아늑한 🛋️' }
+      ]},
+      { q: '메인 활동은?', key: 'activity', options: [
+        { id: 'cafe',     label: '카페 ☕' },
+        { id: 'movie',    label: '영화 🎬' },
+        { id: 'walk',     label: '산책 🌿' },
+        { id: 'food',     label: '맛집 🍝' },
+        { id: 'shopping', label: '쇼핑 🛍️' },
+        { id: 'art',      label: '전시 🎨' }
+      ]}
+    ];
+
+    const COURSES = {
+      'evening-romantic-movie': { title: '🎬 저녁 감성 무비데이트', steps: ['저녁 7시 분위기 좋은 맛집', '감성 영화관에서 시네마', '야경이 보이는 카페에서 마무리'], type: 'R', desc: '낭만적인 저녁, 영화 속 주인공이 된 것 같은 느낌 💕' },
+      'evening-romantic-cafe':  { title: '☕ 저녁 감성 카페 코스', steps: ['해질녘 분위기 좋은 카페', '루프탑에서 야경 보기', '디저트 가게 둘러보기'], type: 'R', desc: '감성 가득한 저녁, 둘만의 시간이 빛나' },
+      'evening-romantic-food':  { title: '🍝 저녁 감성 다이닝', steps: ['예약한 분위기 좋은 식당', '와인 한 잔과 함께', '야경 좋은 카페에서 디저트'], type: 'R', desc: '특별한 날처럼 빛나는 저녁이야 ✨' },
+      'evening-lively-food':    { title: '🍝 저녁 활기찬 푸드 데이트', steps: ['트렌디 맛집에서 저녁', '버스킹 보면서 산책', '같이 노래방 한 곡'], type: 'S', desc: '에너지 넘치는 저녁, 웃음이 가득해' },
+      'afternoon-romantic-cafe':{ title: '🌸 낮 감성 카페 데이트', steps: ['브런치 카페에서 시작', '꽃집 들러서 한 송이', '햇살 좋은 카페에서 책'], type: 'R', desc: '햇살처럼 따뜻한 낭만 데이트야' },
+      'afternoon-lively-shopping':{ title: '🛍️ 활기찬 낮 쇼핑 데이트', steps: ['브런치 카페로 시작', '함께 쇼핑몰 탐방', '맛있는 걸 먹으면서 마무리'], type: 'S', desc: '에너지 넘치는 하루, 웃음이 끊이지 않아 ✨' },
+      'afternoon-lively-food':  { title: '🍝 활기찬 낮 푸드 투어', steps: ['핫한 브런치 가게', '디저트 카페 투어', '쇼핑하며 마무리'], type: 'S', desc: '맛있고 활기찬, 함께라서 더 행복해' },
+      'afternoon-cozy-walk':    { title: '🌿 아늑한 낮 산책', steps: ['카페에서 따뜻한 음료', '공원 천천히 산책', '집 근처 분식집에서 마무리'], type: 'A', desc: '편안하고 여유로운 시간, 둘만의 페이스' },
+      'afternoon-cozy-cafe':    { title: '☕ 아늑한 낮 카페 데이트', steps: ['조용한 동네 카페', '느긋하게 책 읽기', '근처 산책 후 집으로'], type: 'A', desc: '굳이 바쁘지 않아도 행복한 하루' },
+      'night-cozy-cafe':        { title: '☕ 밤 감성 카페 데이트', steps: ['야경 예쁜 카페에서 수다', '편의점 산책', '집까지 같이 걷기'], type: 'A', desc: '둘만의 시간, 조용하고 포근한 밤 데이트 🌙' },
+      'night-romantic-walk':    { title: '🌙 밤 낭만 산책 데이트', steps: ['야경 좋은 곳에서 만남', '강변 산책', '편의점 맥주로 마무리'], type: 'R', desc: '낭만적인 밤바람, 영화같은 한 컷' },
+      'night-lively-food':      { title: '🍝 밤 활기 야식 데이트', steps: ['핫플 야식집', '한강에서 야식 피크닉', '버스 타고 집까지'], type: 'S', desc: '에너지 가득, 잠 못 드는 즐거운 밤 ✨' },
+      'afternoon-romantic-art': { title: '🎨 낮 감성 전시 데이트', steps: ['모닝 카페로 시작', '전시회 천천히 감상', '근처 디저트 카페'], type: 'R', desc: '예술 같은 낮, 영감 가득한 데이트' },
+      'evening-cozy-cafe':      { title: '☕ 저녁 아늑한 카페 데이트', steps: ['저녁 식사 가볍게', '단골 카페에서 수다', '집까지 천천히 걷기'], type: 'A', desc: '편하고 안정적인 저녁, 둘만의 루틴' },
+      'evening-cozy-walk':      { title: '🌿 저녁 아늑한 산책', steps: ['가벼운 저녁', '동네 골목 산책', '편의점 들러서 야식'], type: 'A', desc: '특별하지 않아도 충분히 행복해' },
+      'afternoon-romantic-walk':{ title: '🌸 낮 감성 산책', steps: ['공원에서 만남', '꽃 보며 천천히 걷기', '햇살 카페에서 마무리'], type: 'R', desc: '꽃잎 같은 낭만, 평일 같은 주말 데이트' },
+      'evening-lively-shopping':{ title: '🛍️ 저녁 활기 쇼핑', steps: ['핫플 거리 쇼핑', '저녁 맛집', '버스킹 구경하며 산책'], type: 'S', desc: '도시의 에너지를 함께 즐기는 저녁' },
+      'night-cozy-walk':        { title: '🌙 밤 아늑한 산책', steps: ['집 근처 만남', '야경 좋은 길 산책', '편의점 들러서 마무리'], type: 'A', desc: '하루 끝, 둘만의 조용한 시간' },
+      'afternoon-cozy-food':    { title: '🍝 낮 아늑한 푸드 데이트', steps: ['단골 브런치집', '같이 책방 둘러보기', '집밥 같은 저녁'], type: 'A', desc: '익숙한 곳에서 더 깊어지는 사랑' },
+      'evening-romantic-art':   { title: '🎨 저녁 감성 전시', steps: ['저녁 식사', '야간 전시회 관람', '와인바에서 마무리'], type: 'R', desc: '예술적인 저녁, 영감과 낭만이 함께' }
+    };
+
+    const FALLBACK = { title: '💕 우리 데이트 코스', steps: ['편한 카페에서 시작', '같이 산책', '맛집에서 저녁'], type: 'A', desc: '익숙한 행복, 그게 우리의 데이트야' };
+
+    const TYPES = {
+      E: { name: '감정', file: 'emotion.png' },
+      S: { name: '사교', file: 'social.png' },
+      A: { name: '애착', file: 'attachment.png' },
+      R: { name: '낭만', file: 'romantic.png' },
+      P: { name: '현실', file: 'practical.png' }
+    };
+
+    const $ = (id) => document.getElementById(id);
+    let stepIdx = 0;
+    const choices = {};
+
+    function showOnly(id) {
+      ['screen-intro','screen-step','screen-result'].forEach(s => $(s).classList.toggle('hidden', s !== id));
+    }
+
+    function renderStep() {
+      const step = STEPS[stepIdx];
+      $('step-indicator').textContent = (stepIdx + 1) + ' / ' + STEPS.length;
+      $('step-q').textContent = step.q;
+      const c = $('choices');
+      c.innerHTML = '';
+      c.classList.remove('slide-in');
+      void c.offsetWidth;
+      c.classList.add('slide-in');
+      step.options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'choice';
+        btn.textContent = opt.label;
+        btn.addEventListener('click', () => {
+          gtag('event', 'date_selection', { concept_id: CONCEPT_ID, step: stepIdx + 1, choice: opt.id });
+          choices[step.key] = opt.id;
+          stepIdx++;
+          if (stepIdx < STEPS.length) renderStep();
+          else showResult();
+        });
+        c.appendChild(btn);
+      });
+    }
+
+    function showResult() {
+      const key = choices.time + '-' + choices.mood + '-' + choices.activity;
+      const course = COURSES[key] || FALLBACK;
+      const t = TYPES[course.type];
+      $('result-img').src = '../assets/characters/' + t.file;
+      $('result-img').alt = t.name + ' 코스';
+      $('result-title').textContent = course.title;
+      const list = $('course-list');
+      list.innerHTML = '';
+      course.steps.forEach((s, i) => {
+        const row = document.createElement('div');
+        row.className = 'course-step';
+        row.innerHTML = '<span class="step-num">' + (i + 1) + '</span><span class="step-text">' + s + '</span>';
+        list.appendChild(row);
+      });
+      $('result-desc').textContent = course.desc;
+      gtag('event', 'course_result', { concept_id: CONCEPT_ID, course_key: key, esarp: course.type });
+      if (window.HeartOpenAnalytics) HeartOpenAnalytics.trackResultView(CONCEPT_ID, course.type);
+      showOnly('screen-result');
+    }
+
+    $('btn-start').addEventListener('click', () => {
+      if (window.HeartOpenAnalytics) {
+        HeartOpenAnalytics.trackPageView(CONCEPT_ID, CONCEPT_NAME);
+        HeartOpenAnalytics.trackGameStart(CONCEPT_ID, CONCEPT_NAME);
+      }
+      stepIdx = 0;
+      Object.keys(choices).forEach(k => delete choices[k]);
+      renderStep();
+      showOnly('screen-step');
+    });
+
+    $('btn-share').addEventListener('click', () => {
+      HeartOpenResultCard.shareResult({
+        conceptId: CONCEPT_ID,
+        title: 'Heart Open 데이트 코스 — ' + $('result-title').textContent,
+        url: location.href
+      });
+    });
+    $('btn-save').addEventListener('click', () => HeartOpenResultCard.saveResult('#result-card'));
+    $('btn-cta').addEventListener('click', () => {
+      if (window.HeartOpenAnalytics) HeartOpenAnalytics.trackCtaClick(CONCEPT_ID, 'app_store');
+    });
+    $('btn-restart').addEventListener('click', () => showOnly('screen-intro'));
+  </script>
+</body>
+</html>

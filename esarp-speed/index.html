@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ESARP 스피드 매칭 — Heart Open</title>
+  <meta name="description" content="5개 캐릭터를 설명에 맞게 빠르게 짝지어봐 ⚡">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+  <link rel="stylesheet" href="../shared/tokens.css">
+  <link rel="stylesheet" href="../shared/result-card.css">
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-2NYTV5FKDC"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){ dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'G-2NYTV5FKDC');
+  </script>
+  <script src="../shared/analytics.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
+  <script src="../shared/result-card.js" defer></script>
+  <style>
+    .stage { padding-top: var(--space-6); text-align: center; }
+    h1 { font-size: 22px; font-weight: 700; }
+    .lead { color: var(--text-secondary); font-size: 14px; margin-top: var(--space-2); line-height: 1.6; }
+
+    .match-board {
+      margin-top: var(--space-6);
+      display: grid;
+      grid-template-columns: 1fr 80px 1fr;
+      gap: var(--space-2);
+      align-items: stretch;
+    }
+    .col-label { font-size: 11px; color: var(--text-secondary); font-weight: 700; padding-bottom: var(--space-2); }
+    .desc-item, .char-item {
+      background: var(--card);
+      border: 2px solid transparent;
+      border-radius: var(--radius-md);
+      padding: var(--space-3);
+      box-shadow: var(--shadow-sm);
+      transition: border-color 0.2s ease, background 0.2s ease, transform 0.15s ease;
+      display: flex; align-items: center; justify-content: center;
+      min-height: 64px;
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 1.4;
+      text-align: center;
+      white-space: pre-line;
+    }
+    .char-item { padding: var(--space-2); }
+    .char-item img { width: 56px; height: 56px; object-fit: contain; }
+    .desc-item.active, .char-item.active { border-color: var(--primary); background: var(--accent-surface); }
+    .desc-item.connected, .char-item.connected { border-color: var(--success); }
+    .desc-item.wrong, .char-item.wrong { border-color: #E76A6A; }
+    .center-col { display: flex; flex-direction: column; align-items: center; justify-content: space-around; gap: var(--space-2); }
+    .center-row { font-size: 18px; color: var(--text-secondary); height: 64px; display: flex; align-items: center; }
+    .center-row.linked { color: var(--primary); }
+
+    .submit, .start, .cta-restart {
+      margin-top: var(--space-5);
+      width: 100%;
+      background: var(--primary);
+      color: #fff;
+      padding: 16px;
+      font-size: 16px;
+      font-weight: 700;
+      border-radius: var(--radius-pill);
+      box-shadow: var(--shadow-md);
+    }
+    .submit:disabled { opacity: 0.4; box-shadow: none; }
+    .submit:active:not(:disabled), .start:active { transform: scale(0.98); }
+
+    .score-big { font-size: 56px; font-weight: 800; color: var(--primary); margin-bottom: var(--space-2); }
+
+    .hidden { display: none !important; }
+
+    @keyframes pop-in { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+    .pop-in { animation: pop-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <section id="screen-intro" class="stage">
+      <h1>ESARP 스피드 매칭 ⚡</h1>
+      <p class="lead">Heart Open 5가지 타입을 알아?<br>설명이랑 캐릭터를 짝 지어봐</p>
+      <button class="start" id="btn-start">시작하기</button>
+    </section>
+
+    <section id="screen-game" class="stage hidden">
+      <h1>설명 → 캐릭터 매칭</h1>
+      <p class="lead">왼쪽 설명을 탭한 뒤 어울리는 캐릭터를 골라봐</p>
+      <div class="match-board">
+        <div>
+          <div class="col-label">설명</div>
+          <div id="col-desc" style="display:flex; flex-direction:column; gap: var(--space-2);"></div>
+        </div>
+        <div class="center-col">
+          <div class="col-label" style="visibility:hidden;">↔</div>
+          <div class="center-rows" id="center-rows" style="display:flex; flex-direction:column; gap: var(--space-2); width: 100%;"></div>
+        </div>
+        <div>
+          <div class="col-label">캐릭터</div>
+          <div id="col-char" style="display:flex; flex-direction:column; gap: var(--space-2);"></div>
+        </div>
+      </div>
+      <button class="submit" id="btn-submit" disabled>채점하기</button>
+    </section>
+
+    <section id="screen-result" class="stage hidden">
+      <div class="result-card pop-in" id="result-card">
+        <div class="score-big" id="score-big">0/5</div>
+        <img id="result-img" src="" alt="">
+        <div class="result-title" id="result-title"></div>
+        <div class="result-desc" id="result-desc"></div>
+        <div class="result-actions">
+          <button class="btn-share" id="btn-share">공유</button>
+          <button class="btn-save" id="btn-save">저장</button>
+        </div>
+        <a class="btn-cta" id="btn-cta" href="https://heartopen.app">앱에서 ESARP 자세히 보기 →</a>
+      </div>
+      <button class="cta-restart" id="btn-restart" style="background:transparent;color:var(--text-secondary);box-shadow:none;">다시 해보기</button>
+    </section>
+  </div>
+
+  <script>
+    const CONCEPT_ID = '11';
+    const CONCEPT_NAME = 'ESARP 스피드 매칭';
+
+    const DESCS = [
+      { type: 'E', text: '감정을 솔직하게\n표현하는 타입' },
+      { type: 'S', text: '분위기 메이커,\n관계를 중시하는 타입' },
+      { type: 'A', text: '안정적인 연결을\n원하는 타입' },
+      { type: 'R', text: '설렘과 특별함을\n추구하는 타입' },
+      { type: 'P', text: '실용적이고\n논리적인 타입' }
+    ];
+    const CHARS = {
+      E: { file: 'emotion.png',    name: '감정' },
+      S: { file: 'social.png',     name: '사교' },
+      A: { file: 'attachment.png', name: '애착' },
+      R: { file: 'romantic.png',   name: '낭만' },
+      P: { file: 'practical.png',  name: '현실' }
+    };
+    const LEVELS = {
+      5: { label: 'ESARP 마스터', desc: '5개 다 맞췄어! 완벽해 ✨', char: 'practical.png' },
+      4: { label: 'ESARP 고수',   desc: '거의 다 맞췄어, 하나만 아쉬워!', char: 'romantic.png' },
+      3: { label: 'ESARP 입문자', desc: '반은 알고 있었네!', char: 'social.png' },
+      2: { label: 'ESARP 탐색자', desc: '같이 알아가봐요 🌱', char: 'attachment.png' },
+      1: { label: 'ESARP 뉴비',   desc: '처음이지? 다시 해봐!', char: 'emotion.png' },
+      0: { label: '🤔',            desc: '아직 몰라도 괜찮아! 같이 배워가자', char: 'emotion.png' }
+    };
+
+    const $ = (id) => document.getElementById(id);
+    let descShuffled = [];
+    let charShuffled = [];
+    let activeDesc = null;
+    let connections = {};
+
+    function shuffle(arr) {
+      const a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function showOnly(id) {
+      ['screen-intro','screen-game','screen-result'].forEach(s => $(s).classList.toggle('hidden', s !== id));
+    }
+
+    function renderBoard() {
+      descShuffled = shuffle(DESCS);
+      charShuffled = shuffle(Object.keys(CHARS));
+      activeDesc = null;
+      connections = {};
+      const colDesc = $('col-desc');
+      const colChar = $('col-char');
+      const centerRows = $('center-rows');
+      colDesc.innerHTML = ''; colChar.innerHTML = ''; centerRows.innerHTML = '';
+
+      descShuffled.forEach((d, i) => {
+        const el = document.createElement('button');
+        el.className = 'desc-item';
+        el.dataset.idx = i;
+        el.dataset.type = d.type;
+        el.textContent = d.text;
+        el.addEventListener('click', () => selectDesc(i));
+        colDesc.appendChild(el);
+
+        const row = document.createElement('div');
+        row.className = 'center-row';
+        row.id = 'row-' + i;
+        row.textContent = '·';
+        centerRows.appendChild(row);
+      });
+
+      charShuffled.forEach((type) => {
+        const el = document.createElement('button');
+        el.className = 'char-item';
+        el.dataset.type = type;
+        el.innerHTML = '<img src="../assets/characters/' + CHARS[type].file + '" alt="' + CHARS[type].name + '">';
+        el.addEventListener('click', () => selectChar(type));
+        colChar.appendChild(el);
+      });
+      $('btn-submit').disabled = true;
+    }
+
+    function selectDesc(i) {
+      activeDesc = i;
+      document.querySelectorAll('.desc-item').forEach(el => {
+        el.classList.toggle('active', parseInt(el.dataset.idx) === i);
+      });
+    }
+
+    function selectChar(type) {
+      if (activeDesc === null) return;
+      // remove existing connection for this desc or this char
+      Object.keys(connections).forEach(k => {
+        if (connections[k] === type || parseInt(k) === activeDesc) delete connections[k];
+      });
+      connections[activeDesc] = type;
+      activeDesc = null;
+      updateConnectionsView();
+      $('btn-submit').disabled = Object.keys(connections).length < descShuffled.length;
+    }
+
+    function updateConnectionsView() {
+      document.querySelectorAll('.desc-item').forEach(el => el.classList.remove('active','connected'));
+      document.querySelectorAll('.char-item').forEach(el => el.classList.remove('active','connected'));
+      descShuffled.forEach((_, i) => {
+        const row = $('row-' + i);
+        const t = connections[i];
+        if (t) {
+          row.textContent = '— ' + CHARS[t].name + ' —';
+          row.classList.add('linked');
+          document.querySelector('.desc-item[data-idx="' + i + '"]').classList.add('connected');
+          document.querySelector('.char-item[data-type="' + t + '"]').classList.add('connected');
+        } else {
+          row.textContent = '·';
+          row.classList.remove('linked');
+        }
+      });
+    }
+
+    $('btn-start').addEventListener('click', () => {
+      if (window.HeartOpenAnalytics) {
+        HeartOpenAnalytics.trackPageView(CONCEPT_ID, CONCEPT_NAME);
+        HeartOpenAnalytics.trackGameStart(CONCEPT_ID, CONCEPT_NAME);
+      }
+      renderBoard();
+      showOnly('screen-game');
+    });
+
+    $('btn-submit').addEventListener('click', () => {
+      let correct = 0;
+      descShuffled.forEach((d, i) => {
+        const ok = connections[i] === d.type;
+        const descEl = document.querySelector('.desc-item[data-idx="' + i + '"]');
+        const charEl = document.querySelector('.char-item[data-type="' + connections[i] + '"]');
+        if (descEl) descEl.classList.add(ok ? 'connected' : 'wrong');
+        if (charEl) charEl.classList.add(ok ? 'connected' : 'wrong');
+        if (ok) correct++;
+      });
+      gtag('event', 'match_submit', { concept_id: CONCEPT_ID, correct_count: correct });
+      const lv = LEVELS[correct];
+      setTimeout(() => {
+        $('score-big').textContent = correct + '/5';
+        $('result-img').src = '../assets/characters/' + lv.char;
+        $('result-img').alt = lv.label;
+        $('result-title').textContent = lv.label;
+        $('result-desc').textContent = lv.desc;
+        showOnly('screen-result');
+        if (window.HeartOpenAnalytics) HeartOpenAnalytics.trackResultView(CONCEPT_ID, lv.label);
+      }, 700);
+    });
+
+    $('btn-share').addEventListener('click', () => {
+      HeartOpenResultCard.shareResult({
+        conceptId: CONCEPT_ID,
+        title: 'Heart Open ESARP 스피드 — ' + $('score-big').textContent,
+        url: location.href
+      });
+    });
+    $('btn-save').addEventListener('click', () => HeartOpenResultCard.saveResult('#result-card'));
+    $('btn-cta').addEventListener('click', () => {
+      if (window.HeartOpenAnalytics) HeartOpenAnalytics.trackCtaClick(CONCEPT_ID, 'app_store');
+    });
+    $('btn-restart').addEventListener('click', () => showOnly('screen-intro'));
+  </script>
+</body>
+</html>

@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>캐릭터 정체 추리 — Heart Open</title>
+  <meta name="description" content="힌트 3개로 ESARP 캐릭터 정체를 맞혀봐 🔍">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+  <link rel="stylesheet" href="../shared/tokens.css">
+  <link rel="stylesheet" href="../shared/result-card.css">
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-2NYTV5FKDC"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){ dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'G-2NYTV5FKDC');
+  </script>
+  <script src="../shared/analytics.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
+  <script src="../shared/result-card.js" defer></script>
+  <style>
+    .stage { padding-top: var(--space-6); text-align: center; }
+    h1 { font-size: 22px; font-weight: 700; }
+    .lead { color: var(--text-secondary); font-size: 14px; margin-top: var(--space-2); line-height: 1.6; }
+    .progress { margin-top: var(--space-4); color: var(--primary-dark); font-size: 12px; font-weight: 700; }
+
+    .hint-stack { margin-top: var(--space-5); display: flex; flex-direction: column; gap: var(--space-3); }
+    .hint-card {
+      background: var(--card);
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+      box-shadow: var(--shadow-sm);
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.5;
+      min-height: 56px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: background 0.3s, transform 0.15s;
+      text-align: center;
+    }
+    .hint-card.locked { background: var(--accent-surface); color: var(--primary-dark); }
+    .hint-card.locked.disabled { opacity: 0.5; cursor: not-allowed; }
+    .hint-card.opened { background: var(--surface-warm); color: var(--text-primary); }
+    .hint-card:active:not(.disabled) { transform: scale(0.98); }
+
+    .answers {
+      margin-top: var(--space-6);
+      display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--space-2);
+    }
+    .ans {
+      background: var(--card);
+      border: 2px solid transparent;
+      border-radius: var(--radius-md);
+      padding: var(--space-2);
+      box-shadow: var(--shadow-sm);
+      transition: border-color 0.2s, transform 0.15s;
+    }
+    .ans img { width: 48px; height: 48px; object-fit: contain; }
+    .ans-label { font-size: 11px; font-weight: 600; color: var(--text-secondary); margin-top: 2px; }
+    .ans:active { transform: scale(0.94); }
+
+    .start, .cta-restart, .next-btn {
+      margin-top: var(--space-5);
+      width: 100%;
+      background: var(--primary);
+      color: #fff;
+      padding: 16px;
+      font-size: 16px;
+      font-weight: 700;
+      border-radius: var(--radius-pill);
+      box-shadow: var(--shadow-md);
+    }
+    .start:active, .next-btn:active { transform: scale(0.98); }
+
+    .verdict { font-size: 32px; font-weight: 800; }
+    .verdict.correct { color: var(--success); }
+    .verdict.wrong { color: #E76A6A; }
+
+    .hidden { display: none !important; }
+
+    @keyframes pop-in { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+    .pop-in { animation: pop-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    @keyframes shake { 10%, 90% { transform: translateX(-2px); } 20%, 80% { transform: translateX(3px); } 30%, 50%, 70% { transform: translateX(-5px); } 40%, 60% { transform: translateX(5px); } }
+    .shake { animation: shake 0.5s ease-in-out; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <section id="screen-intro" class="stage">
+      <h1>캐릭터 정체 추리 🔍</h1>
+      <p class="lead">힌트 3개를 보고 어떤 ESARP 캐릭터인지<br>맞혀봐! 5문제 중 몇 개 맞출까?</p>
+      <button class="start" id="btn-start">시작하기</button>
+    </section>
+
+    <section id="screen-game" class="stage hidden">
+      <div class="progress" id="progress">1 / 5</div>
+      <h1 id="q-title">이 캐릭터는 누구일까?</h1>
+      <p class="lead">힌트를 순서대로 열어봐</p>
+      <div class="hint-stack" id="hint-stack"></div>
+      <p class="lead" style="margin-top: var(--space-5);">정답이라고 생각하는 캐릭터를 골라봐</p>
+      <div class="answers" id="answers"></div>
+    </section>
+
+    <section id="screen-feedback" class="stage hidden">
+      <div class="verdict" id="verdict"></div>
+      <img id="reveal-img" src="" alt="" style="width:200px;height:200px;object-fit:contain;margin: var(--space-3) auto;">
+      <div class="result-title" id="reveal-title"></div>
+      <div class="result-desc" id="reveal-desc"></div>
+      <p class="lead" id="hints-used"></p>
+      <button class="next-btn" id="btn-next">다음 문제</button>
+    </section>
+
+    <section id="screen-result" class="stage hidden">
+      <div class="result-card pop-in" id="result-card">
+        <div style="font-size:48px;font-weight:800;color:var(--primary-dark);" id="final-score">0/5</div>
+        <img id="final-img" src="" alt="">
+        <div class="result-title" id="final-title"></div>
+        <div class="result-desc" id="final-desc"></div>
+        <div class="result-actions">
+          <button class="btn-share" id="btn-share">공유</button>
+          <button class="btn-save" id="btn-save">저장</button>
+        </div>
+        <a class="btn-cta" id="btn-cta" href="https://heartopen.app">앱에서 ESARP 자세히 보기 →</a>
+      </div>
+      <button class="cta-restart" id="btn-restart" style="background:transparent;color:var(--text-secondary);box-shadow:none;">다시 해보기</button>
+    </section>
+  </div>
+
+  <script>
+    const CONCEPT_ID = '13';
+    const CONCEPT_NAME = '캐릭터 정체 추리';
+
+    const MYSTERIES = [
+      { target: 'E', hints: [
+        '이 사람은 혼자 영화 보다 울어요 🎬',
+        '남친한테 하루에 카톡을 30번 보내기도 해요',
+        '싸우면 바로 사과 문자 보내는 스타일이에요'
+      ], reveal: '감정형 (E) — 솔직한 감정 표현이 사랑 언어야 💕' },
+      { target: 'S', hints: [
+        '친구가 200명이에요 (전부 연락 가능) 😂',
+        '데이트에 친구 불러도 되냐고 물어봐요',
+        '분위기 어색하면 무조건 농담 치는 스타일'
+      ], reveal: '사교형 (S) — 활기찬 에너지로 주변을 밝혀줘 ✨' },
+      { target: 'A', hints: [
+        '남친 침대 베개 냄새가 그리울 때가 있어요 🌙',
+        '오래된 커플 SNS 보면 부럽고 좋아요',
+        '이별이 무서워서 갈등을 피하기도 해요'
+      ], reveal: '애착형 (A) — 깊고 안정적인 사랑을 원해 🌙' },
+      { target: 'R', hints: [
+        '비 오는 날 카페에서 커피 마시는 게 로망이에요 ☔',
+        '생일에 꽃을 받으면 하루종일 기분 좋아요',
+        '영화 속 고백 장면 보면 눈물이 나요 🌸'
+      ], reveal: '낭만형 (R) — 설레고 특별한 순간을 사랑해 🌈' },
+      { target: 'P', hints: [
+        '데이트 전 날 경로 미리 검색해둬요 📋',
+        '감정보다 해결책이 먼저 나오는 스타일이에요',
+        '사귀기 전에 상대방 MBTI 먼저 확인해요 😂'
+      ], reveal: '현실형 (P) — 실용적이고 믿음직스러운 연애를 해 🌱' }
+    ];
+
+    const CHARS = {
+      E: { file: 'emotion.png',    name: '감정' },
+      S: { file: 'social.png',     name: '사교' },
+      A: { file: 'attachment.png', name: '애착' },
+      R: { file: 'romantic.png',   name: '낭만' },
+      P: { file: 'practical.png',  name: '현실' }
+    };
+
+    const FINAL_TIERS = [
+      { min: 5, label: '추리의 신!', desc: '5문제 다 맞췄어, 완벽한 ESARP 통찰 ✨', char: 'practical.png' },
+      { min: 4, label: '추리 고수',   desc: '거의 다 맞췄어! 진짜 잘 알아', char: 'romantic.png' },
+      { min: 3, label: '추리 입문자', desc: '반은 알고 있었네, 다음엔 더 잘 할 수 있어', char: 'social.png' },
+      { min: 2, label: '추리 탐색자', desc: '같이 ESARP 더 알아가봐요 🌱', char: 'attachment.png' },
+      { min: 0, label: '추리 뉴비',   desc: '괜찮아, 처음엔 다 그래! 🌸', char: 'emotion.png' }
+    ];
+
+    const $ = (id) => document.getElementById(id);
+    let order = [];
+    let qi = 0;
+    let score = 0;
+    let lastHintCount = 0;
+    let lastCorrect = false;
+
+    function shuffleOrder() {
+      order = MYSTERIES.map((_, i) => i);
+      for (let i = order.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [order[i], order[j]] = [order[j], order[i]];
+      }
+    }
+
+    function showOnly(id) {
+      ['screen-intro','screen-game','screen-feedback','screen-result'].forEach(s => $(s).classList.toggle('hidden', s !== id));
+    }
+
+    function renderQuestion() {
+      const m = MYSTERIES[order[qi]];
+      $('progress').textContent = (qi + 1) + ' / 5';
+      const stack = $('hint-stack');
+      stack.innerHTML = '';
+      lastHintCount = 0;
+      m.hints.forEach((h, i) => {
+        const card = document.createElement('div');
+        card.className = 'hint-card locked' + (i === 0 ? '' : ' disabled');
+        card.dataset.idx = i;
+        card.textContent = '힌트 ' + (i + 1) + ' 열기';
+        card.addEventListener('click', () => {
+          if (card.classList.contains('disabled') || card.classList.contains('opened')) return;
+          card.classList.remove('locked');
+          card.classList.add('opened');
+          card.textContent = h;
+          lastHintCount = Math.max(lastHintCount, i + 1);
+          gtag('event', 'hint_open', { concept_id: CONCEPT_ID, mystery_type: m.target, hint_num: i + 1 });
+          const next = stack.querySelector('.hint-card[data-idx="' + (i + 1) + '"]');
+          if (next) next.classList.remove('disabled');
+        });
+        stack.appendChild(card);
+      });
+      const ans = $('answers');
+      ans.innerHTML = '';
+      Object.keys(CHARS).forEach(t => {
+        const btn = document.createElement('button');
+        btn.className = 'ans';
+        btn.dataset.type = t;
+        btn.innerHTML = '<img src="../assets/characters/' + CHARS[t].file + '" alt="' + CHARS[t].name + '"><div class="ans-label">' + CHARS[t].name + '</div>';
+        btn.addEventListener('click', () => submitAnswer(t));
+        ans.appendChild(btn);
+      });
+    }
+
+    function submitAnswer(type) {
+      const m = MYSTERIES[order[qi]];
+      const correct = type === m.target;
+      lastCorrect = correct;
+      gtag('event', 'answer_submit', { concept_id: CONCEPT_ID, correct: correct, hints_used: Math.max(1, lastHintCount) });
+      if (correct) score++;
+      const verdict = $('verdict');
+      verdict.textContent = correct ? '정답이야! 🎉' : '아쉬워! 정답은…';
+      verdict.className = 'verdict ' + (correct ? 'correct' : 'wrong');
+      $('reveal-img').src = '../assets/characters/' + CHARS[m.target].file;
+      $('reveal-img').alt = CHARS[m.target].name;
+      $('reveal-img').className = correct ? '' : 'shake';
+      $('reveal-title').textContent = CHARS[m.target].name + ' 타입';
+      $('reveal-desc').textContent = m.reveal;
+      $('hints-used').textContent = '힌트 ' + Math.max(1, lastHintCount) + '개 사용';
+      $('btn-next').textContent = qi >= MYSTERIES.length - 1 ? '결과 보기' : '다음 문제';
+      showOnly('screen-feedback');
+    }
+
+    function showFinal() {
+      const tier = FINAL_TIERS.find(t => score >= t.min);
+      $('final-score').textContent = score + '/5';
+      $('final-img').src = '../assets/characters/' + tier.char;
+      $('final-img').alt = tier.label;
+      $('final-title').textContent = tier.label;
+      $('final-desc').textContent = tier.desc;
+      if (window.HeartOpenAnalytics) HeartOpenAnalytics.trackResultView(CONCEPT_ID, tier.label);
+      showOnly('screen-result');
+    }
+
+    $('btn-start').addEventListener('click', () => {
+      if (window.HeartOpenAnalytics) {
+        HeartOpenAnalytics.trackPageView(CONCEPT_ID, CONCEPT_NAME);
+        HeartOpenAnalytics.trackGameStart(CONCEPT_ID, CONCEPT_NAME);
+      }
+      shuffleOrder();
+      qi = 0; score = 0;
+      renderQuestion();
+      showOnly('screen-game');
+    });
+
+    $('btn-next').addEventListener('click', () => {
+      qi++;
+      if (qi >= MYSTERIES.length) showFinal();
+      else { renderQuestion(); showOnly('screen-game'); }
+    });
+
+    $('btn-share').addEventListener('click', () => {
+      HeartOpenResultCard.shareResult({
+        conceptId: CONCEPT_ID,
+        title: 'Heart Open 캐릭터 추리 — ' + $('final-score').textContent,
+        url: location.href
+      });
+    });
+    $('btn-save').addEventListener('click', () => HeartOpenResultCard.saveResult('#result-card'));
+    $('btn-cta').addEventListener('click', () => {
+      if (window.HeartOpenAnalytics) HeartOpenAnalytics.trackCtaClick(CONCEPT_ID, 'app_store');
+    });
+    $('btn-restart').addEventListener('click', () => showOnly('screen-intro'));
+  </script>
+</body>
+</html>

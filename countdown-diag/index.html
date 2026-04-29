@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>카운트다운 궁합 진단 — Heart Open</title>
+  <meta name="description" content="10초 카운트다운으로 우리 궁합을 드라마틱하게 확인 💞">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+  <link rel="stylesheet" href="../shared/tokens.css">
+  <link rel="stylesheet" href="../shared/result-card.css">
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-2NYTV5FKDC"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){ dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'G-2NYTV5FKDC');
+  </script>
+  <script src="../shared/analytics.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
+  <script src="../shared/result-card.js" defer></script>
+  <style>
+    .stage { padding-top: var(--space-6); text-align: center; }
+    h1 { font-size: 22px; font-weight: 700; }
+    .lead { color: var(--text-secondary); font-size: 14px; margin-top: var(--space-2); line-height: 1.6; }
+
+    .name-form { margin-top: var(--space-6); display: flex; flex-direction: column; gap: var(--space-3); }
+    .name-form input {
+      background: var(--card);
+      border: 2px solid transparent;
+      border-radius: var(--radius-md);
+      padding: var(--space-4);
+      font-size: 16px;
+      font-family: inherit;
+      box-shadow: var(--shadow-sm);
+      text-align: center;
+    }
+    .name-form input:focus { border-color: var(--primary); outline: none; }
+
+    .start, .cta-restart {
+      margin-top: var(--space-6);
+      width: 100%;
+      background: var(--primary);
+      color: #fff;
+      padding: 16px;
+      font-size: 16px;
+      font-weight: 700;
+      border-radius: var(--radius-pill);
+      box-shadow: var(--shadow-md);
+    }
+    .start:active { transform: scale(0.98); }
+
+    .countdown {
+      margin-top: var(--space-8);
+      font-size: 120px;
+      font-weight: 800;
+      line-height: 1;
+      color: var(--primary-dark);
+      text-shadow: 0 4px 16px rgba(217, 79, 120, 0.2);
+    }
+    .names-line {
+      margin-top: var(--space-4);
+      font-size: 18px;
+      font-weight: 700;
+    }
+    .heart-rain {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 10;
+    }
+    .heart-rain .h {
+      position: absolute;
+      font-size: 28px;
+      animation: fall 1.6s ease-in forwards;
+    }
+    @keyframes fall {
+      0% { transform: translateY(-50px) scale(0.5); opacity: 0; }
+      30% { opacity: 1; }
+      100% { transform: translateY(100vh) scale(1.2); opacity: 0; }
+    }
+
+    .pct-big { font-size: 88px; font-weight: 800; color: var(--primary-dark); }
+    .compat-chars {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-3);
+      margin-top: var(--space-2);
+    }
+    .compat-chars img { width: 120px; height: 120px; object-fit: contain; }
+    .compat-heart { font-size: 32px; }
+
+    .hidden { display: none !important; }
+
+    @keyframes pop-in { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+    .pop-in { animation: pop-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    @keyframes count-pulse {
+      0% { transform: scale(0.7); opacity: 0; }
+      40% { transform: scale(1.15); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .count-pulse { animation: count-pulse 0.5s ease-out; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <section id="screen-input" class="stage">
+      <h1>카운트다운 궁합 진단 💞</h1>
+      <p class="lead">두 이름 넣고 시작하면<br>10초 후 우리 궁합 공개!</p>
+      <div class="name-form">
+        <input type="text" id="name1" placeholder="내 이름 (생략 가능)" maxlength="10">
+        <input type="text" id="name2" placeholder="상대 이름 (생략 가능)" maxlength="10">
+      </div>
+      <button class="start" id="btn-start">시작하기</button>
+    </section>
+
+    <section id="screen-count" class="stage hidden">
+      <div class="names-line" id="names-line"></div>
+      <p class="lead">우리 궁합은...</p>
+      <div class="countdown" id="countdown">10</div>
+    </section>
+
+    <section id="screen-result" class="stage hidden">
+      <div class="result-card pop-in" id="result-card">
+        <div class="names-line" id="names-line-result"></div>
+        <div class="pct-big" id="pct-big">0%</div>
+        <div class="compat-chars">
+          <img id="char-a" src="" alt="">
+          <span class="compat-heart">💞</span>
+          <img id="char-b" src="" alt="">
+        </div>
+        <div class="result-title" id="result-title"></div>
+        <div class="result-desc" id="result-desc"></div>
+        <div class="result-actions">
+          <button class="btn-share" id="btn-share">공유</button>
+          <button class="btn-save" id="btn-save">저장</button>
+        </div>
+        <a class="btn-cta" id="btn-cta" href="https://heartopen.app">앱에서 진짜 ESARP 분석 →</a>
+      </div>
+      <button class="cta-restart" id="btn-restart" style="background:transparent;color:var(--text-secondary);box-shadow:none;">다시 해보기</button>
+    </section>
+  </div>
+
+  <script>
+    const CONCEPT_ID = '12';
+    const CONCEPT_NAME = '카운트다운 궁합 진단';
+
+    const $ = (id) => document.getElementById(id);
+
+    function calcCompat(n1, n2) {
+      const combined = (n1 || '나') + (n2 || '남친');
+      let hash = 0;
+      for (let i = 0; i < combined.length; i++) {
+        hash = (hash * 31 + combined.charCodeAt(i)) % 100000;
+      }
+      return 60 + (hash % 40); // 60..99
+    }
+
+    function getLevel(pct) {
+      if (pct >= 90) return { label: '운명 커플 💎', chars: ['romantic.png', 'emotion.png'], msg: '이런 궁합은 진짜 드물어! 우리 영원히 행복하자 💕' };
+      if (pct >= 80) return { label: '찰떡 커플 ✨',  chars: ['attachment.png', 'social.png'], msg: '서로 잘 맞는 커플이야! 이대로만 가줘 🌸' };
+      if (pct >= 70) return { label: '성장 커플 🌱', chars: ['practical.png', 'emotion.png'], msg: '함께 맞춰가면 완벽해질 수 있어 ✨' };
+      return { label: '도전 커플 🔥', chars: ['social.png', 'practical.png'], msg: '차이가 있어도 괜찮아, 오히려 배울 게 많아!' };
+    }
+
+    function showOnly(id) {
+      ['screen-input','screen-count','screen-result'].forEach(s => $(s).classList.toggle('hidden', s !== id));
+    }
+
+    function spawnHearts() {
+      const layer = document.createElement('div');
+      layer.className = 'heart-rain';
+      document.body.appendChild(layer);
+      for (let i = 0; i < 8; i++) {
+        const h = document.createElement('span');
+        h.className = 'h';
+        h.textContent = ['💕','💖','💞','💗'][i % 4];
+        h.style.left = Math.random() * 100 + 'vw';
+        h.style.animationDelay = (Math.random() * 0.4) + 's';
+        layer.appendChild(h);
+      }
+      setTimeout(() => layer.remove(), 2200);
+    }
+
+    function startCountdown(n1, n2) {
+      $('names-line').textContent = (n1 || '나') + ' & ' + (n2 || '남친');
+      const target = calcCompat(n1, n2);
+      let count = 10;
+      const cd = $('countdown');
+      cd.textContent = count;
+      const tick = setInterval(() => {
+        count--;
+        if (count < 0) {
+          clearInterval(tick);
+          revealResult(n1, n2, target);
+          return;
+        }
+        cd.textContent = count;
+        cd.classList.remove('count-pulse'); void cd.offsetWidth; cd.classList.add('count-pulse');
+        if ([7, 5, 3].includes(count)) {
+          if (navigator.vibrate) navigator.vibrate(100);
+          spawnHearts();
+        }
+      }, 700);
+    }
+
+    function revealResult(n1, n2, target) {
+      const lv = getLevel(target);
+      $('names-line-result').textContent = (n1 || '나') + ' & ' + (n2 || '남친');
+      $('result-title').textContent = lv.label;
+      $('result-desc').textContent = lv.msg;
+      $('char-a').src = '../assets/characters/' + lv.chars[0];
+      $('char-b').src = '../assets/characters/' + lv.chars[1];
+      $('char-a').alt = ''; $('char-b').alt = '';
+      const pct = $('pct-big');
+      let cur = 0;
+      const up = setInterval(() => {
+        cur = Math.min(cur + 3, target);
+        pct.textContent = cur + '%';
+        if (cur >= target) clearInterval(up);
+      }, 30);
+      gtag('event', 'result_view', { concept_id: CONCEPT_ID, pct: target, level: lv.label });
+      if (window.HeartOpenAnalytics) HeartOpenAnalytics.trackResultView(CONCEPT_ID, lv.label);
+      showOnly('screen-result');
+    }
+
+    $('btn-start').addEventListener('click', () => {
+      const n1 = $('name1').value.trim();
+      const n2 = $('name2').value.trim();
+      if (window.HeartOpenAnalytics) {
+        HeartOpenAnalytics.trackPageView(CONCEPT_ID, CONCEPT_NAME);
+        HeartOpenAnalytics.trackGameStart(CONCEPT_ID, CONCEPT_NAME);
+      }
+      showOnly('screen-count');
+      startCountdown(n1, n2);
+    });
+
+    $('btn-share').addEventListener('click', () => {
+      HeartOpenResultCard.shareResult({
+        conceptId: CONCEPT_ID,
+        title: 'Heart Open 궁합 — ' + $('pct-big').textContent + ' ' + $('result-title').textContent,
+        url: location.href
+      });
+    });
+    $('btn-save').addEventListener('click', () => HeartOpenResultCard.saveResult('#result-card'));
+    $('btn-cta').addEventListener('click', () => {
+      if (window.HeartOpenAnalytics) HeartOpenAnalytics.trackCtaClick(CONCEPT_ID, 'app_store');
+    });
+    $('btn-restart').addEventListener('click', () => showOnly('screen-input'));
+  </script>
+</body>
+</html>
