@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#FF6F91">
+  <meta name="description" content="10초만에 알아보는 내 연애 유형. 슬롯머신을 돌려 5가지 캐릭터 중 나와 매칭!">
+
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="10초만에 우리 연애 유형 알아보기 💕">
+  <meta property="og:description" content="딱 1문제. 직감으로 답하면 5가지 캐릭터 중 나와 매칭!">
+  <meta property="og:image" content="https://flowerbam.github.io/heart-open/assets/og-match.png">
+  <meta property="og:url" content="https://flowerbam.github.io/heart-open/match/">
+  <meta property="og:locale" content="ko_KR">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@latest/dist/web/static/pretendard.min.css">
+
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-2NYTV5FKDC"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-2NYTV5FKDC', {
+      'page_title': 'Match Slot',
+      'page_path': '/heart-open/match/'
+    });
+  </script>
+
+  <title>10초만에 우리 연애 유형 알아보기 💕 - Heart Open</title>
+
+  <style>
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --primary:#FF6F91;
+      --primary-light:#FFB3C6;
+      --primary-dark:#D94F78;
+      --accent:#C3B1E1;
+      --bg:#FFF9F7;
+      --surface-warm:#FFF0EC;
+      --card:#FFFFFF;
+      --text-primary:#1A1A1A;
+      --text-secondary:#6B6B6B;
+      --shadow-card:0 8px 24px rgba(217,79,120,.12);
+      --radius-lg:20px;
+      --radius-md:14px;
+    }
+    html,body{height:100%}
+    body{
+      font-family:'Pretendard',-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+      background:var(--bg);
+      color:var(--text-primary);
+      line-height:1.6;
+      -webkit-font-smoothing:antialiased;
+      -webkit-text-size-adjust:100%;
+      overflow-x:hidden;
+    }
+    button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+    img{max-width:100%;display:block}
+
+    .stage{
+      position:relative;
+      min-height:100vh;
+      min-height:100dvh;
+      width:100%;
+      overflow:hidden;
+    }
+    .screen{
+      position:absolute;
+      inset:0;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+      opacity:0;
+      pointer-events:none;
+      transition:opacity .35s ease;
+    }
+    .screen.active{opacity:1;pointer-events:auto}
+    .screen.scroll{justify-content:flex-start;padding-top:32px;padding-bottom:48px;overflow-y:auto}
+
+    /* ---------- Screen 1: Landing ---------- */
+    #screen-landing{
+      background:linear-gradient(180deg,var(--bg) 0%,var(--surface-warm) 100%);
+      text-align:center;
+    }
+    .landing-inner{max-width:480px;width:100%;display:flex;flex-direction:column;align-items:center;gap:18px}
+    .landing-emoji{font-size:48px;margin-bottom:4px}
+    .landing-inner h1{
+      font-size:clamp(26px,6.5vw,34px);
+      font-weight:700;
+      letter-spacing:-.02em;
+      line-height:1.3;
+    }
+    .landing-inner p{color:var(--text-secondary);font-size:16px}
+    .cta-primary{
+      margin-top:14px;
+      display:inline-flex;align-items:center;justify-content:center;
+      min-height:54px;
+      padding:0 36px;
+      border-radius:999px;
+      background:var(--primary);
+      color:#fff;
+      font-size:17px;
+      font-weight:600;
+      box-shadow:0 8px 20px rgba(255,111,145,.35);
+      transition:transform .15s ease,box-shadow .15s ease;
+      width:100%;
+      max-width:320px;
+    }
+    .cta-primary:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(255,111,145,.42)}
+    .cta-primary:active{transform:translateY(0)}
+    .meta-line{margin-top:8px;font-size:13px;color:var(--text-secondary)}
+
+    /* ---------- Screen 2: Question ---------- */
+    #screen-question{
+      background:linear-gradient(180deg,#2A1A22 0%,#3A1F2C 100%);
+      color:#fff;
+    }
+    .q-inner{max-width:520px;width:100%;display:flex;flex-direction:column;gap:18px}
+    .q-title{font-size:clamp(22px,5.5vw,28px);font-weight:700;letter-spacing:-.02em;line-height:1.35;text-align:center}
+    .q-sub{color:rgba(255,255,255,.7);text-align:center;font-size:14px}
+    .q-options{display:flex;flex-direction:column;gap:12px;margin-top:6px}
+    .q-option{
+      display:flex;align-items:center;gap:14px;
+      width:100%;
+      min-height:64px;
+      padding:16px 18px;
+      border-radius:var(--radius-md);
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.12);
+      color:#fff;
+      text-align:left;
+      font-size:16px;
+      transition:transform .15s ease,background .2s ease,box-shadow .2s ease;
+    }
+    .q-option:hover{background:rgba(255,255,255,.13)}
+    .q-option:active{transform:scale(.98)}
+    .q-option.selected{
+      background:rgba(255,179,198,.22);
+      border-color:var(--primary-light);
+      box-shadow:0 0 0 3px rgba(255,179,198,.25),0 8px 22px rgba(255,111,145,.25);
+    }
+    .q-option .emo{font-size:24px;flex-shrink:0}
+
+    /* ---------- Screen 3: Slot ---------- */
+    #screen-slot{
+      background:radial-gradient(120% 80% at 50% 30%,#5A2640 0%,#2A1320 70%);
+      color:#fff;
+      gap:32px;
+    }
+    .slot-title{font-size:20px;font-weight:600;letter-spacing:-.01em;opacity:.9}
+    .slot-frame{
+      position:relative;
+      width:min(72vw,260px);
+      aspect-ratio:1/1;
+      border-radius:28px;
+      background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02));
+      box-shadow:
+        inset 0 0 0 2px rgba(255,179,198,.2),
+        0 20px 50px rgba(0,0,0,.45);
+      overflow:hidden;
+    }
+    .slot-track{
+      position:absolute;inset:0;
+      display:flex;flex-direction:column;
+      will-change:transform;
+    }
+    .slot-cell{
+      flex-shrink:0;
+      width:100%;
+      height:100%;
+      display:flex;align-items:center;justify-content:center;
+      padding:14px;
+    }
+    .slot-cell img{
+      width:80%;height:80%;object-fit:contain;
+      filter:drop-shadow(0 8px 20px rgba(0,0,0,.4));
+    }
+    .slot-cell .ph{
+      width:80%;height:80%;
+      display:flex;align-items:center;justify-content:center;
+      font-size:64px;font-weight:700;
+      border-radius:24px;
+    }
+    .slot-glow{
+      position:absolute;left:0;right:0;top:50%;height:30%;
+      transform:translateY(-50%);
+      pointer-events:none;
+      box-shadow:0 0 60px 10px rgba(255,179,198,.18) inset;
+      border-top:1px solid rgba(255,179,198,.25);
+      border-bottom:1px solid rgba(255,179,198,.25);
+    }
+
+    /* ---------- Screen 4-5: Result ---------- */
+    #screen-result{
+      background:linear-gradient(180deg,var(--bg) 0%,var(--surface-warm) 100%);
+    }
+    .result-inner{max-width:420px;width:100%;display:flex;flex-direction:column;align-items:center;gap:22px}
+    .result-card{
+      width:100%;
+      aspect-ratio:2/3;
+      border-radius:24px;
+      padding:28px 24px;
+      display:flex;flex-direction:column;align-items:center;justify-content:space-between;
+      color:#fff;
+      box-shadow:var(--shadow-card);
+      opacity:0;transform:scale(.95);
+      transition:opacity .5s ease,transform .5s cubic-bezier(.2,.9,.3,1.2);
+      text-align:center;
+    }
+    .result-card.show{opacity:1;transform:scale(1)}
+    .result-card .label{font-size:14px;font-weight:600;letter-spacing:.08em;opacity:.85;text-transform:uppercase}
+    .result-card .name{font-size:28px;font-weight:700;letter-spacing:-.02em;margin-top:6px}
+    .result-card .char{
+      width:65%;aspect-ratio:1/1;
+      display:flex;align-items:center;justify-content:center;
+    }
+    .result-card .char img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 12px 24px rgba(0,0,0,.18))}
+    .result-card .char .ph{
+      width:100%;height:100%;border-radius:50%;
+      background:rgba(255,255,255,.18);
+      display:flex;align-items:center;justify-content:center;
+      font-size:88px;font-weight:700;color:#fff;
+    }
+    .result-card .one-line{font-size:16px;font-weight:500;line-height:1.5}
+    .result-card .meta{
+      width:100%;
+      display:flex;flex-direction:column;gap:6px;
+      font-size:13px;
+      background:rgba(255,255,255,.16);
+      backdrop-filter:blur(6px);
+      border-radius:14px;
+      padding:12px 14px;
+    }
+    .result-card .meta .row{display:flex;justify-content:space-between;gap:10px}
+    .result-card .meta .row b{font-weight:600;opacity:.9}
+    .result-card .meta .row span{opacity:.95}
+
+    .actions{
+      display:flex;gap:10px;flex-wrap:wrap;justify-content:center;width:100%;
+    }
+    .btn{
+      flex:1 1 140px;
+      min-height:48px;
+      padding:0 18px;
+      border-radius:14px;
+      font-size:15px;font-weight:600;
+      display:inline-flex;align-items:center;justify-content:center;gap:6px;
+      transition:transform .15s ease,background .2s ease;
+    }
+    .btn-fill{background:var(--primary);color:#fff;box-shadow:0 6px 16px rgba(255,111,145,.3)}
+    .btn-fill:active{transform:scale(.98)}
+    .btn-soft{background:#fff;color:var(--primary-dark);border:1px solid rgba(217,79,120,.15)}
+    .btn-ghost{background:transparent;color:var(--text-secondary)}
+    .divider{width:64px;height:2px;background:rgba(0,0,0,.06);border-radius:2px;margin:6px 0}
+
+    .app-cta{
+      width:100%;
+      background:#fff;
+      border-radius:var(--radius-lg);
+      padding:20px;
+      text-align:center;
+      box-shadow:var(--shadow-card);
+      display:flex;flex-direction:column;gap:10px;align-items:center;
+    }
+    .app-cta h3{font-size:17px;font-weight:700;letter-spacing:-.01em}
+    .app-cta p{font-size:13px;color:var(--text-secondary)}
+    .app-cta .row{display:flex;gap:8px;width:100%;justify-content:center;flex-wrap:wrap}
+
+    .footer{margin-top:8px;font-size:12px;color:var(--text-secondary);text-align:center}
+
+    /* SR-only */
+    .sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+  </style>
+</head>
+<body>
+  <main class="stage" id="stage" aria-live="polite">
+
+    <!-- Screen 1: Landing -->
+    <section class="screen active" id="screen-landing" aria-label="시작 화면">
+      <div class="landing-inner">
+        <div class="landing-emoji" aria-hidden="true">💕</div>
+        <h1>10초만에 우리 연애 유형 알아보기</h1>
+        <p>딱 1문제. 직감으로 답해주세요</p>
+        <button class="cta-primary" id="btn-start">시작하기</button>
+        <div class="meta-line">5가지 캐릭터 중 나와 매칭</div>
+      </div>
+    </section>
+
+    <!-- Screen 2: Question -->
+    <section class="screen" id="screen-question" aria-label="질문">
+      <div class="q-inner">
+        <h2 class="q-title">지금 남친한테 카톡 한 줄 보낸다면?</h2>
+        <p class="q-sub">직감으로! 너무 고민 X</p>
+        <div class="q-options" id="q-options">
+          <button class="q-option" data-answer="A" data-type="E">
+            <span class="emo" aria-hidden="true">🥺</span>
+            <span>자기야 보고 싶어</span>
+          </button>
+          <button class="q-option" data-answer="B" data-type="S">
+            <span class="emo" aria-hidden="true">📸</span>
+            <span>[방금 본 풍경 사진]</span>
+          </button>
+          <button class="q-option" data-answer="C" data-type="P">
+            <span class="emo" aria-hidden="true">😂</span>
+            <span>(재밌는 짤이나 유머)</span>
+          </button>
+          <button class="q-option" data-answer="D" data-type="R">
+            <span class="emo" aria-hidden="true">💬</span>
+            <span>오늘 뭐 먹을지 정하자</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Screen 3: Slot -->
+    <section class="screen" id="screen-slot" aria-label="결과 추첨 중">
+      <div class="slot-title" id="slot-title">당신의 유형은...</div>
+      <div class="slot-frame">
+        <div class="slot-track" id="slot-track" aria-hidden="true"></div>
+        <div class="slot-glow"></div>
+      </div>
+      <span class="sr" id="slot-sr">결과를 추첨하고 있어요</span>
+    </section>
+
+    <!-- Screen 4+5: Result + CTA -->
+    <section class="screen scroll" id="screen-result" aria-label="결과">
+      <div class="result-inner">
+        <div class="result-card" id="result-card">
+          <div>
+            <div class="label" id="r-label">TYPE</div>
+            <div class="name" id="r-name">—</div>
+          </div>
+          <div class="char" id="r-char"></div>
+          <div class="one-line" id="r-oneline">—</div>
+          <div class="meta">
+            <div class="row"><b>강점</b><span id="r-strength">—</span></div>
+            <div class="row"><b>잘 맞는 유형</b><span id="r-match">—</span></div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-fill" id="btn-share">📷 카드 저장 / 공유</button>
+          <button class="btn btn-soft" id="btn-retry">다시 해보기</button>
+        </div>
+
+        <div class="divider" aria-hidden="true"></div>
+
+        <div class="app-cta">
+          <h3>앱에서 진짜 우리 매칭 보기 →</h3>
+          <p>12개 질문, 5가지 유형 정밀 분석</p>
+          <div class="row">
+            <a class="btn btn-fill" id="cta-app" href="https://apps.apple.com/app/id0000000000" target="_blank" rel="noopener">앱 다운로드</a>
+          </div>
+        </div>
+
+        <div class="footer">Heart Open · 곧 출시</div>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" defer></script>
+  <script>
+  (function(){
+    'use strict';
+
+    // ----- Type data -----
+    const TYPES = {
+      E:{name:'감정 표현형 💕',emoji:'💕',
+         oneLine:'마음을 직접 표현하는 따뜻한 사람',
+         strength:'솔직하고 사랑이 가득',
+         match:'R, A형과 케미 좋음',
+         gradient:'linear-gradient(135deg,#FF6F91,#FFB3C6)',
+         color:'#FF6F91'},
+      S:{name:'함께하기형 ✨',emoji:'✨',
+         oneLine:'일상 공유로 사랑을 키우는 사람',
+         strength:'함께 시간이 풍부함',
+         match:'P, E형과 케미 좋음',
+         gradient:'linear-gradient(135deg,#C3B1E1,#DDD0F0)',
+         color:'#C3B1E1'},
+      A:{name:'유연한 적응형 🌱',emoji:'🌱',
+         oneLine:'상황에 맞춰 마음을 표현하는 사람',
+         strength:'갈등 해결 능력 ↑',
+         match:'E, R형과 케미 좋음',
+         gradient:'linear-gradient(135deg,#82C09A,#B8E0C5)',
+         color:'#82C09A'},
+      R:{name:'신뢰 기반형 🤝',emoji:'🤝',
+         oneLine:'약속과 일관성으로 사랑을 보여주는 사람',
+         strength:'안정감 있고 든든함',
+         match:'E, A형과 케미 좋음',
+         gradient:'linear-gradient(135deg,#FFA07A,#FFCBA4)',
+         color:'#FFA07A'},
+      P:{name:'실용 즐거움형 🎉',emoji:'🎉',
+         oneLine:'일상의 재미로 사랑을 만드는 사람',
+         strength:'지루할 틈 없음',
+         match:'S, A형과 케미 좋음',
+         gradient:'linear-gradient(135deg,#FFD580,#FFE5B4)',
+         color:'#FFD580'},
+    };
+    const ORDER = ['E','S','A','R','P'];
+    const IMG_PATH = (k)=>`../assets/characters/${k.toLowerCase()}.png`;
+
+    // ----- State -----
+    let currentType = null;
+    const imgCache = {};
+
+    // ----- Helpers -----
+    function $(id){return document.getElementById(id)}
+    function show(id){
+      document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+      $(id).classList.add('active');
+      window.scrollTo({top:0,behavior:'instant'});
+    }
+    function vibrate(ms){try{navigator.vibrate&&navigator.vibrate(ms)}catch(_){}}
+    function gtagSafe(){try{gtag.apply(null,arguments)}catch(_){}}
+
+    // Preload character images; if missing fall back to letter placeholder.
+    function preloadImages(){
+      ORDER.forEach(k=>{
+        const img = new Image();
+        img.onload = ()=>{imgCache[k]={ok:true,src:img.src}};
+        img.onerror = ()=>{imgCache[k]={ok:false}};
+        img.src = IMG_PATH(k);
+      });
+    }
+
+    function makeCharNode(key,sizeClass){
+      const t = TYPES[key];
+      const wrap = document.createElement('div');
+      wrap.className = sizeClass||'';
+      const cached = imgCache[key];
+      if(cached && cached.ok){
+        const im = document.createElement('img');
+        im.src = cached.src;
+        im.alt = t.name;
+        wrap.appendChild(im);
+      } else {
+        const ph = document.createElement('div');
+        ph.className = 'ph';
+        ph.style.background = t.gradient;
+        ph.textContent = key;
+        wrap.appendChild(ph);
+      }
+      return wrap;
+    }
+
+    // ----- Screen 1 -> 2 -----
+    $('btn-start').addEventListener('click',()=>{
+      gtagSafe('event','quiz_started');
+      show('screen-question');
+    });
+
+    // ----- Screen 2 -> 3 -----
+    $('q-options').addEventListener('click',(e)=>{
+      const btn = e.target.closest('.q-option');
+      if(!btn) return;
+      document.querySelectorAll('.q-option').forEach(b=>b.classList.remove('selected'));
+      btn.classList.add('selected');
+      const answer = btn.dataset.answer;
+      const type = btn.dataset.type;
+      gtagSafe('event','answer_selected',{answer:answer});
+      currentType = type;
+      setTimeout(()=>{
+        show('screen-slot');
+        runSlot(type);
+      },380);
+    });
+
+    // ----- Screen 3: Slot machine -----
+    function buildTrack(finalKey){
+      const track = $('slot-track');
+      track.innerHTML = '';
+      // Sequence: many cycles of ORDER, end with finalKey.
+      // Total cells: ~ 24 cycles * 5 + final = 121.
+      const cycles = 24;
+      const seq = [];
+      for(let i=0;i<cycles;i++) seq.push(...ORDER);
+      seq.push(finalKey);
+      seq.forEach(k=>{
+        const cell = document.createElement('div');
+        cell.className = 'slot-cell';
+        cell.appendChild(makeCharNode(k));
+        track.appendChild(cell);
+      });
+      return seq.length;
+    }
+
+    function runSlot(finalKey){
+      const track = $('slot-track');
+      const total = buildTrack(finalKey);
+      // Wait next frame to measure cell height.
+      requestAnimationFrame(()=>{
+        const cellH = track.firstChild.getBoundingClientRect().height;
+        const finalIndex = total - 1;
+        const finalY = -finalIndex * cellH;
+
+        // Reset
+        track.style.transition = 'none';
+        track.style.transform = 'translateY(0)';
+        // Force reflow
+        void track.offsetWidth;
+
+        // Spin: ease-out cubic over 1.5s
+        track.style.transition = 'transform 1.5s cubic-bezier(.18,.7,.2,1)';
+        track.style.transform = `translateY(${finalY}px)`;
+
+        // Bounce overshoot near the end
+        const onEnd = ()=>{
+          track.removeEventListener('transitionend',onEnd);
+          // Small overshoot bounce
+          track.style.transition = 'transform .25s cubic-bezier(.2,.9,.3,1.4)';
+          track.style.transform = `translateY(${finalY - cellH*0.06}px)`;
+          setTimeout(()=>{
+            track.style.transition = 'transform .2s ease-out';
+            track.style.transform = `translateY(${finalY}px)`;
+            vibrate(200);
+            gtagSafe('event','result_revealed',{result_type:finalKey});
+            setTimeout(showResult,300);
+          },220);
+        };
+        track.addEventListener('transitionend',onEnd,{once:true});
+      });
+    }
+
+    // ----- Screen 4: Result -----
+    function showResult(){
+      const t = TYPES[currentType];
+      const card = $('result-card');
+      card.style.background = t.gradient;
+      $('r-label').textContent = `TYPE ${currentType}`;
+      $('r-name').textContent = t.name;
+      const charWrap = $('r-char');
+      charWrap.innerHTML = '';
+      charWrap.appendChild(makeCharNode(currentType));
+      $('r-oneline').textContent = t.oneLine;
+      $('r-strength').textContent = t.strength;
+      $('r-match').textContent = t.match;
+
+      show('screen-result');
+      // Trigger reveal animation
+      requestAnimationFrame(()=>{
+        setTimeout(()=>card.classList.add('show'),20);
+      });
+    }
+
+    // ----- Share / save -----
+    async function saveResultCard(){
+      if(typeof html2canvas === 'undefined'){
+        alert('카드 저장 라이브러리를 불러오는 중이에요. 잠시 후 다시 시도해주세요.');
+        return;
+      }
+      const card = $('result-card');
+      const canvas = await html2canvas(card,{
+        backgroundColor:null,
+        scale:2,
+        useCORS:true,
+        allowTaint:false,
+      });
+      gtagSafe('event','result_card_saved',{result_type:currentType});
+
+      canvas.toBlob((blob)=>{
+        if(!blob){return}
+        const file = new File([blob],`heart-open-${currentType}.png`,{type:'image/png'});
+        const canShareFiles = navigator.canShare && navigator.canShare({files:[file]});
+        if(navigator.share && canShareFiles){
+          navigator.share({
+            files:[file],
+            title:`나는 ${currentType}형!`,
+            text:'나도 해봐 💕',
+          }).then(()=>{
+            gtagSafe('event','result_shared',{result_type:currentType});
+          }).catch(()=>{/* user cancelled */});
+        } else {
+          const link = document.createElement('a');
+          link.download = `heart-open-${currentType}.png`;
+          link.href = canvas.toDataURL('image/png');
+          link.click();
+        }
+      },'image/png');
+    }
+
+    $('btn-share').addEventListener('click',saveResultCard);
+
+    $('btn-retry').addEventListener('click',()=>{
+      gtagSafe('event','retry_clicked');
+      currentType = null;
+      $('result-card').classList.remove('show');
+      document.querySelectorAll('.q-option').forEach(b=>b.classList.remove('selected'));
+      show('screen-landing');
+    });
+
+    $('cta-app').addEventListener('click',()=>{
+      gtagSafe('event','cta_clicked',{result_type:currentType||'unknown'});
+    });
+
+    // ----- Init -----
+    preloadImages();
+  })();
+  </script>
+</body>
+</html>
