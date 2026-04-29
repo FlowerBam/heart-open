@@ -7,6 +7,8 @@
   <meta name="description" content="매일 돌봐주면 자라는 ESARP 연애 캐릭터 🌱">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
   <link rel="stylesheet" href="../shared/tokens.css">
+  <link rel="stylesheet" href="../_shared/tokens.css">
+  <script src="../_shared/result-esarp.js" defer></script>
   <link rel="stylesheet" href="../shared/result-card.css">
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-2NYTV5FKDC"></script>
   <script>
@@ -16,8 +18,16 @@
     gtag('config', 'G-2NYTV5FKDC');
   </script>
   <script src="../shared/analytics.js" defer></script>
+  <script src="../_shared/haptic.js" defer></script>
+  <script src="../_shared/motion.js" defer></script>
+  <script src="../_shared/ga4-funnel.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
   <script src="../shared/result-card.js" defer></script>
+  <script src="../_shared/local-storage.js" defer></script>
+  <script src="../_shared/share-card-ratio.js" defer></script>
+  <script src="../_shared/share-caption.js" defer></script>
+  <script src="../_shared/revisit-hook.js" defer></script>
+  <script src="../_shared/stage2-engagement.js" defer></script>
   <style>
     .stage { padding-top: var(--space-6); text-align: center; }
     h1 { font-size: 22px; font-weight: 700; line-height: 1.4; }
@@ -121,7 +131,7 @@
     }
   </style>
 </head>
-<body>
+<body data-concept-id="tamagotchi" data-concept-name="별빛 다마고치" data-revisit-hooks="tomorrow,collection" data-share-hashtags="하트오픈다마고치,별빛성장">
   <div class="container">
     <!-- INTRO -->
     <section id="screen-intro" class="stage hidden">
@@ -155,7 +165,7 @@
 
     <!-- RESULT (share card) -->
     <section id="screen-result" class="stage hidden">
-      <div class="result-card" id="result-card">
+      <div class="result-card" id="result-card" role="status" aria-live="polite" aria-atomic="true">
         <img id="result-img" src="" alt="">
         <div class="result-title" id="result-title"></div>
         <div class="result-desc" id="result-desc"></div>
@@ -188,10 +198,14 @@
       { stage: 3, xp: 300, size: 220, opacity: 1.0, brightness: 1.10, label: '만개 — 완전히 피어났어 💕' }
     ];
 
+    // 돌봄 행동 6종 (Stage 2 Must, evolution/07)
     const ACTIONS = [
-      { id: 'talk',  emoji: '💬', label: '오늘 남친이랑 대화했어', xp: 20 },
-      { id: 'think', emoji: '💭', label: '오늘 남친 생각했어',     xp: 10 },
-      { id: 'date',  emoji: '🌸', label: '오늘 남친이랑 만났어',   xp: 30 }
+      { id: 'talk',     emoji: '💬', label: '오늘 남친이랑 대화했어',       xp: 20 },
+      { id: 'think',    emoji: '💭', label: '오늘 남친 생각했어',           xp: 10 },
+      { id: 'date',     emoji: '🌸', label: '오늘 남친이랑 만났어',         xp: 30 },
+      { id: 'birthday', emoji: '🎂', label: '오늘 남친 생일 축하했어',      xp: 25 },
+      { id: 'love',     emoji: '💕', label: '오늘 남친한테 좋아한다고 했어', xp: 20 },
+      { id: 'movie',    emoji: '🎬', label: '오늘 같이 영화 봤어',          xp: 15 }
     ];
 
     const KEY = 'heart-open-pet-v1';
@@ -293,6 +307,13 @@
       p.totalDays = (p.totalDays || 0) + 1;
       p.lastCare = todayStr();
       save(p);
+      // 돌봄 history 30일치 보관 (Stage 2 Must, evolution/07)
+      try {
+        if (window.HeartOpenLS) {
+          HeartOpenLS.lsAppend(HeartOpenLS.lsKey('07', 'care-history'),
+            { date: todayStr(), action: a.id, xp: a.xp }, { cap: 30 });
+        }
+      } catch (_) {}
       gtag('event', 'daily_care', { concept_id: CONCEPT_ID, action: a.id, xp_gained: a.xp });
       gtag('event', 'streak_update', { concept_id: CONCEPT_ID, streak_days: p.streakDays });
       if (afterStage > beforeStage) {

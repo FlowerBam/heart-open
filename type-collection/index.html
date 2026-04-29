@@ -7,6 +7,8 @@
   <meta name="description" content="5문제 풀어 ESARP 5유형 카드를 다 모아봐 🎴">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
   <link rel="stylesheet" href="../shared/tokens.css">
+  <link rel="stylesheet" href="../_shared/tokens.css">
+  <script src="../_shared/result-esarp.js" defer></script>
   <link rel="stylesheet" href="../shared/result-card.css">
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-2NYTV5FKDC"></script>
   <script>
@@ -16,8 +18,16 @@
     gtag('config', 'G-2NYTV5FKDC');
   </script>
   <script src="../shared/analytics.js" defer></script>
+  <script src="../_shared/haptic.js" defer></script>
+  <script src="../_shared/motion.js" defer></script>
+  <script src="../_shared/ga4-funnel.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
   <script src="../shared/result-card.js" defer></script>
+  <script src="../_shared/local-storage.js" defer></script>
+  <script src="../_shared/share-card-ratio.js" defer></script>
+  <script src="../_shared/share-caption.js" defer></script>
+  <script src="../_shared/revisit-hook.js" defer></script>
+  <script src="../_shared/stage2-engagement.js" defer></script>
   <style>
     .stage { padding-top: var(--space-6); text-align: center; }
     h1 { font-size: 22px; font-weight: 700; }
@@ -121,7 +131,7 @@
     .flip-in { animation: flip-in 0.5s ease-out; }
   </style>
 </head>
-<body>
+<body data-concept-id="type-collection" data-concept-name="타입 콜렉션" data-revisit-hooks="collection,friend" data-share-hashtags="하트오픈콜렉션,ESARP5유형">
   <div class="container">
     <section id="screen-intro" class="stage">
       <h1>5유형 카드 콜렉션 🎴</h1>
@@ -143,7 +153,7 @@
     </section>
 
     <section id="screen-result" class="stage hidden">
-      <div class="result-card pop-in" id="result-card">
+      <div class="result-card pop-in" id="result-card" role="status" aria-live="polite" aria-atomic="true">
         <div style="font-size:14px;color:var(--text-secondary);font-weight:600;" id="collection-count">5/5 모음</div>
         <div class="full-cards glow" id="full-cards"></div>
         <img id="result-img" src="" alt="">

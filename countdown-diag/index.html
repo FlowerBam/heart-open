@@ -3,10 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>카운트다운 궁합 진단 — Heart Open</title>
+  <title>카운트다운 궁합 보기 — Heart Open</title>
   <meta name="description" content="10초 카운트다운으로 우리 궁합을 드라마틱하게 확인 💞">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
   <link rel="stylesheet" href="../shared/tokens.css">
+  <link rel="stylesheet" href="../_shared/tokens.css">
+  <script src="../_shared/result-esarp.js" defer></script>
   <link rel="stylesheet" href="../shared/result-card.css">
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-2NYTV5FKDC"></script>
   <script>
@@ -16,8 +18,16 @@
     gtag('config', 'G-2NYTV5FKDC');
   </script>
   <script src="../shared/analytics.js" defer></script>
+  <script src="../_shared/haptic.js" defer></script>
+  <script src="../_shared/motion.js" defer></script>
+  <script src="../_shared/ga4-funnel.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
   <script src="../shared/result-card.js" defer></script>
+  <script src="../_shared/local-storage.js" defer></script>
+  <script src="../_shared/share-card-ratio.js" defer></script>
+  <script src="../_shared/share-caption.js" defer></script>
+  <script src="../_shared/revisit-hook.js" defer></script>
+  <script src="../_shared/stage2-engagement.js" defer></script>
   <style>
     .stage { padding-top: var(--space-6); text-align: center; }
     h1 { font-size: 22px; font-weight: 700; }
@@ -81,6 +91,12 @@
     }
 
     .pct-big { font-size: 88px; font-weight: 800; color: var(--primary-dark); }
+    .sim-note {
+      margin-top: var(--space-3);
+      font-size: 11px;
+      color: var(--text-secondary);
+      opacity: 0.7;
+    }
     .compat-chars {
       display: flex;
       align-items: center;
@@ -103,10 +119,10 @@
     .count-pulse { animation: count-pulse 0.5s ease-out; }
   </style>
 </head>
-<body>
+<body data-concept-id="countdown-diag" data-concept-name="카운트다운 궁합" data-revisit-hooks="tomorrow,partner" data-share-hashtags="하트오픈궁합,커플궁합">
   <div class="container">
     <section id="screen-input" class="stage">
-      <h1>카운트다운 궁합 진단 💞</h1>
+      <h1>카운트다운 궁합 보기 💞</h1>
       <p class="lead">두 이름 넣고 시작하면<br>10초 후 우리 궁합 공개!</p>
       <div class="name-form">
         <input type="text" id="name1" placeholder="내 이름 (생략 가능)" maxlength="10">
@@ -118,11 +134,11 @@
     <section id="screen-count" class="stage hidden">
       <div class="names-line" id="names-line"></div>
       <p class="lead">우리 궁합은...</p>
-      <div class="countdown" id="countdown">10</div>
+      <div class="countdown" id="countdown" role="timer" aria-live="assertive" aria-atomic="true" aria-label="궁합 카운트다운">10</div>
     </section>
 
     <section id="screen-result" class="stage hidden">
-      <div class="result-card pop-in" id="result-card">
+      <div class="result-card pop-in" id="result-card" role="status" aria-live="polite" aria-atomic="true">
         <div class="names-line" id="names-line-result"></div>
         <div class="pct-big" id="pct-big">0%</div>
         <div class="compat-chars">
@@ -132,6 +148,7 @@
         </div>
         <div class="result-title" id="result-title"></div>
         <div class="result-desc" id="result-desc"></div>
+        <div class="sim-note">오늘의 운세 시뮬레이션 ✨</div>
         <div class="result-actions">
           <button class="btn-share" id="btn-share">공유</button>
           <button class="btn-save" id="btn-save">저장</button>
@@ -144,12 +161,15 @@
 
   <script>
     const CONCEPT_ID = '12';
-    const CONCEPT_NAME = '카운트다운 궁합 진단';
+    const CONCEPT_NAME = '카운트다운 궁합 보기';
 
     const $ = (id) => document.getElementById(id);
 
+    // 날짜 시드(YYYY-MM-DD + couple_id 해시) 기반 계산 (evolution/12_countdown_diag_evo.md Must)
+    // 같은 날 같은 이름 쌍이면 동일 결과, 다른 날엔 다름 → "오늘의 궁합" 컨셉.
+    function todayISO() { return new Date().toISOString().slice(0, 10); }
     function calcCompat(n1, n2) {
-      const combined = (n1 || '나') + (n2 || '남친');
+      const combined = (n1 || '나') + (n2 || '남친') + todayISO();
       let hash = 0;
       for (let i = 0; i < combined.length; i++) {
         hash = (hash * 31 + combined.charCodeAt(i)) % 100000;
@@ -199,9 +219,11 @@
         cd.textContent = count;
         cd.classList.remove('count-pulse'); void cd.offsetWidth; cd.classList.add('count-pulse');
         if ([7, 5, 3].includes(count)) {
-          if (navigator.vibrate) navigator.vibrate(100);
-          spawnHearts();
+          if (window.HeartOpenHaptic) HeartOpenHaptic.medium();
+          else if (navigator.vibrate) navigator.vibrate(100);
+          if (!(window.HeartOpenMotion && window.HeartOpenMotion.reduced)) spawnHearts();
         }
+        if (count === 1 && window.HeartOpenHaptic) HeartOpenHaptic.light();
       }, 700);
     }
 
@@ -221,6 +243,7 @@
         if (cur >= target) clearInterval(up);
       }, 30);
       gtag('event', 'result_view', { concept_id: CONCEPT_ID, pct: target, level: lv.label });
+      if (window.HeartOpenHaptic) HeartOpenHaptic.reveal();
       if (window.HeartOpenAnalytics) HeartOpenAnalytics.trackResultView(CONCEPT_ID, lv.label);
       showOnly('screen-result');
     }

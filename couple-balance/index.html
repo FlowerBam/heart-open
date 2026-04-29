@@ -7,6 +7,8 @@
   <meta name="description" content="5라운드 밸런스 게임으로 우리 커플 점수 공개 ⚖️">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
   <link rel="stylesheet" href="../shared/tokens.css">
+  <link rel="stylesheet" href="../_shared/tokens.css">
+  <script src="../_shared/result-esarp.js" defer></script>
   <link rel="stylesheet" href="../shared/result-card.css">
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-2NYTV5FKDC"></script>
   <script>
@@ -16,8 +18,16 @@
     gtag('config', 'G-2NYTV5FKDC');
   </script>
   <script src="../shared/analytics.js" defer></script>
+  <script src="../_shared/haptic.js" defer></script>
+  <script src="../_shared/motion.js" defer></script>
+  <script src="../_shared/ga4-funnel.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
   <script src="../shared/result-card.js" defer></script>
+  <script src="../_shared/local-storage.js" defer></script>
+  <script src="../_shared/share-card-ratio.js" defer></script>
+  <script src="../_shared/share-caption.js" defer></script>
+  <script src="../_shared/revisit-hook.js" defer></script>
+  <script src="../_shared/stage2-engagement.js" defer></script>
   <style>
     .stage { padding-top: var(--space-6); text-align: center; }
     h1 { font-size: 22px; font-weight: 700; }
@@ -83,7 +93,7 @@
     .pop-in { animation: pop-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
   </style>
 </head>
-<body>
+<body data-concept-id="couple-balance" data-concept-name="커플 밸런스" data-revisit-hooks="partner,friend" data-share-hashtags="하트오픈밸런스,커플점수">
   <div class="container">
     <section id="screen-intro" class="stage">
       <h1>커플 밸런스 점수판 ⚖️</h1>
@@ -104,7 +114,7 @@
     </section>
 
     <section id="screen-result" class="stage hidden">
-      <div class="result-card pop-in" id="result-card">
+      <div class="result-card pop-in" id="result-card" role="status" aria-live="polite" aria-atomic="true">
         <div class="gauge-wrap">
           <svg width="200" height="200" viewBox="0 0 200 200">
             <circle cx="100" cy="100" r="86" fill="none" stroke="var(--accent-surface)" stroke-width="14"/>
@@ -146,6 +156,18 @@
       P: { name: '현실적인 커플', file: 'practical.png', desc: '서로를 존중하는 현실적인 커플이야. 함께하면 든든해 ✨' }
     };
 
+    // 점수 구간 × ESARP = 15종 라벨 (Stage 2 Must, evolution/20)
+    const SCORE_BAND_LABELS = {
+      high: { E: '감성 만점 커플 💕', S: '활기 만점 커플 ✨', A: '안정 만점 커플 🌙', R: '낭만 만점 커플 🌸', P: '균형 만점 커플 🌱' },
+      mid:  { E: '감성 깊은 커플 💕', S: '활기찬 일상 커플 ✨', A: '서로 기대는 커플 🌙', R: '낭만 가득 커플 🌸', P: '단단한 현실 커플 🌱' },
+      low:  { E: '감성 균형 찾는 중 💕', S: '활기 만들어가는 중 ✨', A: '안정 다지는 중 🌙', R: '낭만 더해가는 중 🌸', P: '서로 맞춰가는 중 🌱' },
+    };
+    function scoreBand(score) {
+      if (score >= 95) return 'high';
+      if (score >= 70) return 'mid';
+      return 'low';
+    }
+
     const $ = (id) => document.getElementById(id);
     let qi = 0;
     const choices = []; // 'left' | 'right'
@@ -178,20 +200,51 @@
       }, 420);
     }
 
-    function showResult() {
-      const leftCount = choices.filter(c => c === 'left').length;
-      const rightCount = choices.length - leftCount;
-      const balance = Math.abs(leftCount - rightCount);
-      const score = 100 - balance * 8;
+    // 점수 공식 재설계 — ESARP 일관성 + 밸런스 정규화 (evolution/20_couple_balance_evo.md Must)
+    function calcScore(choices) {
       const types = choices.map((c, i) => QUESTIONS[i][c].type);
-      const freq = types.reduce((acc, t) => { acc[t] = (acc[t] || 0) + 1; return acc; }, {});
+      const freq = types.reduce((a, t) => (a[t] = (a[t] || 0) + 1, a), {});
+      const max = Math.max(...Object.values(freq));
+      const consistency = (max / choices.length) * 50; // 0~50
+      const leftCount = choices.filter(c => c === 'left').length;
+      const balanceScore = 50 - Math.abs(leftCount - choices.length / 2) * 10; // 0~50
+      return {
+        score: Math.max(0, Math.min(100, Math.round(consistency + balanceScore))),
+        consistency: Math.round(consistency),
+        balanceScore: Math.round(balanceScore),
+        types,
+        freq,
+      };
+    }
+
+    function showResult() {
+      const calc = calcScore(choices);
+      const { score, consistency, balanceScore, types, freq } = calc;
       const mainType = Object.entries(freq).sort((a,b) => b[1]-a[1])[0][0];
       const couple = COUPLE_TYPES[mainType];
 
+      const band = scoreBand(score);
+      const label = (SCORE_BAND_LABELS[band] && SCORE_BAND_LABELS[band][mainType]) || couple.name;
       $('result-img').src = '../assets/characters/' + couple.file;
       $('result-img').alt = couple.name;
-      $('result-title').textContent = couple.name + ' (' + score + '점)';
-      $('result-desc').textContent = couple.desc;
+      $('result-title').textContent = label + ' (' + score + '점)';
+
+      // localStorage 점수 이력 (Stage 2 Must, evolution/20)
+      let trendNote = '';
+      try {
+        if (window.HeartOpenLS) {
+          const k = HeartOpenLS.lsKey('20', 'history');
+          const prev = HeartOpenLS.lsGet(k, []);
+          if (Array.isArray(prev) && prev.length > 0) {
+            const last = prev[prev.length - 1];
+            const diff = score - (last && last.score || 0);
+            const sign = diff > 0 ? '+' : '';
+            trendNote = ' · 지난번 ' + (last.score || 0) + '점 → 이번 ' + score + '점 (' + sign + diff + ')';
+          }
+          HeartOpenLS.lsAppend(k, { score: score, type: mainType, ts: Date.now() }, { cap: 10 });
+        }
+      } catch (_) {}
+      $('result-desc').textContent = couple.desc + trendNote;
 
       // gauge animation
       const arc = document.getElementById('gauge-arc');
@@ -209,7 +262,7 @@
         arc.setAttribute('stroke-dashoffset', offset);
       }, 100);
 
-      gtag('event', 'balance_result', { concept_id: CONCEPT_ID, score: score, couple_type: mainType });
+      gtag('event', 'balance_result', { concept_id: CONCEPT_ID, score, couple_type: mainType, consistency, balance_score: balanceScore });
       if (window.HeartOpenAnalytics) HeartOpenAnalytics.trackResultView(CONCEPT_ID, mainType);
       showOnly('screen-result');
     }

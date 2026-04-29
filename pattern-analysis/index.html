@@ -7,6 +7,8 @@
   <meta name="description" content="우리 사이의 갈등 패턴을 5문제로 살펴봐 🔍">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
   <link rel="stylesheet" href="../shared/tokens.css">
+  <link rel="stylesheet" href="../_shared/tokens.css">
+  <script src="../_shared/result-esarp.js" defer></script>
   <link rel="stylesheet" href="../shared/result-card.css">
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-2NYTV5FKDC"></script>
   <script>
@@ -16,8 +18,16 @@
     gtag('config', 'G-2NYTV5FKDC');
   </script>
   <script src="../shared/analytics.js" defer></script>
+  <script src="../_shared/haptic.js" defer></script>
+  <script src="../_shared/motion.js" defer></script>
+  <script src="../_shared/ga4-funnel.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
   <script src="../shared/result-card.js" defer></script>
+  <script src="../_shared/local-storage.js" defer></script>
+  <script src="../_shared/share-card-ratio.js" defer></script>
+  <script src="../_shared/share-caption.js" defer></script>
+  <script src="../_shared/revisit-hook.js" defer></script>
+  <script src="../_shared/stage2-engagement.js" defer></script>
   <style>
     .stage { padding-top: var(--space-6); text-align: center; }
     h1 { font-size: 22px; font-weight: 700; line-height: 1.4; }
@@ -81,7 +91,7 @@
     .hidden { display: none !important; }
   </style>
 </head>
-<body>
+<body data-concept-id="pattern-analysis" data-concept-name="커플 패턴" data-revisit-hooks="partner,friend" data-share-hashtags="하트오픈패턴,커플갈등패턴">
   <div class="container">
     <section id="screen-intro" class="stage">
       <h1>우리 패턴 보기 🔍</h1>
@@ -103,7 +113,7 @@
     </section>
 
     <section id="screen-result" class="stage hidden">
-      <div class="result-card" id="result-card">
+      <div class="result-card" id="result-card" role="status" aria-live="polite" aria-atomic="true">
         <img id="result-img" src="" alt="">
         <div class="result-title" id="result-title"></div>
         <div class="result-desc" id="result-desc"></div>
@@ -229,14 +239,32 @@
     }
 
     function finish() {
-      const main = Object.entries(scores).sort((a,b) => b[1]-a[1])[0][0];
+      const sorted = Object.entries(scores).sort((a,b) => b[1]-a[1]);
+      const main = sorted[0][0];
+      const sub  = sorted[1] && sorted[1][0];
       const T = TYPES[main];
       $('result-img').src = '../assets/characters/' + T.char;
       $('result-img').alt = T.name;
-      $('result-title').textContent = T.name + ' 결';
-      $('result-desc').textContent = T.desc;
+      $('result-title').textContent = T.name + ' 결' + (sub ? ' + ' + (TYPES[sub] && TYPES[sub].name || sub) : '');
+
+      // 시간차 재방문 비교 (Stage 2 Must, evolution/15)
+      let trend = '';
+      try {
+        if (window.HeartOpenLS) {
+          const k = HeartOpenLS.lsKey('15', 'history');
+          const prev = HeartOpenLS.lsGet(k, []);
+          const last = Array.isArray(prev) && prev.length ? prev[prev.length - 1] : null;
+          if (last) {
+            const days = Math.max(0, Math.floor((Date.now() - last.ts) / 86400000));
+            if (last.main !== main && days > 0) trend = ' · ' + days + '일 전 ' + last.main + ' → 지금 ' + main + ' 변화';
+            else if (last.main === main && days > 0) trend = ' · ' + days + '일 전과 같은 결';
+          }
+          HeartOpenLS.lsAppend(k, { main: main, sub: sub, ts: Date.now(), scores: Object.assign({}, scores) }, { cap: 12 });
+        }
+      } catch (_) {}
+      $('result-desc').textContent = T.desc + trend;
       $('tip-card').textContent = T.tip;
-      gtag('event', 'pattern_complete', { concept_id: CONCEPT_ID, main_pattern: main });
+      gtag('event', 'pattern_complete', { concept_id: CONCEPT_ID, main_pattern: main, sub_pattern: sub || null });
       if (window.HeartOpenAnalytics) HeartOpenAnalytics.trackResultView(CONCEPT_ID, main);
       showOnly('screen-result');
     }

@@ -7,6 +7,8 @@
   <meta name="description" content="예측 불가 질문이 뚝 떨어지는 즉흥 답변 게임">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
   <link rel="stylesheet" href="../shared/tokens.css">
+  <link rel="stylesheet" href="../_shared/tokens.css">
+  <script src="../_shared/result-esarp.js" defer></script>
   <link rel="stylesheet" href="../shared/result-card.css">
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-2NYTV5FKDC"></script>
   <script>
@@ -16,8 +18,16 @@
     gtag('config', 'G-2NYTV5FKDC');
   </script>
   <script src="../shared/analytics.js" defer></script>
+  <script src="../_shared/haptic.js" defer></script>
+  <script src="../_shared/motion.js" defer></script>
+  <script src="../_shared/ga4-funnel.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
   <script src="../shared/result-card.js" defer></script>
+  <script src="../_shared/local-storage.js" defer></script>
+  <script src="../_shared/share-card-ratio.js" defer></script>
+  <script src="../_shared/share-caption.js" defer></script>
+  <script src="../_shared/revisit-hook.js" defer></script>
+  <script src="../_shared/stage2-engagement.js" defer></script>
   <style>
     body { background: #1f1a24; }
     .container { color: #fff; }
@@ -80,7 +90,7 @@
     .pop-in { animation: pop-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
   </style>
 </head>
-<body>
+<body data-concept-id="chaos-drop" data-concept-name="카오스 드롭" data-revisit-hooks="alt-ending,friend" data-share-hashtags="하트오픈카오스,카오스드롭">
   <div class="container">
     <section id="screen-intro" class="stage">
       <h1>🌑 카오스 드롭</h1>
@@ -94,7 +104,7 @@
     </section>
 
     <section id="screen-result" class="stage hidden">
-      <div class="result-card pop-in" id="result-card" style="background: var(--card); color: var(--text-primary);">
+      <div class="result-card pop-in" id="result-card" style="background: var(--card); color: var(--text-primary);" role="status" aria-live="polite" aria-atomic="true">
         <img id="result-img" src="" alt="">
         <div class="result-title" id="result-title"></div>
         <div class="result-desc" id="result-desc"></div>
@@ -186,6 +196,8 @@
           const choice = btn.dataset.choice;
           const type = choice === 'a' ? q.ta : q.tb;
           gtag('event', 'drop_answer', { concept_id: CONCEPT_ID, question_idx: roundIdx, choice });
+          if (window.HeartOpenAnalytics) HeartOpenAnalytics.trackStep(CONCEPT_ID, 'drop_answer_' + (roundIdx + 1));
+          if (window.HeartOpenHaptic) HeartOpenHaptic.light();
           typeCounts[type] = (typeCounts[type] || 0) + 1;
           showReaction(type);
         });
@@ -218,6 +230,7 @@
       $('result-title').textContent = '카오스 결과: ' + t.name + ' 타입';
       $('result-desc').textContent = t.reaction;
       showOnly('screen-result');
+      if (window.HeartOpenHaptic) HeartOpenHaptic.reveal();
       if (window.HeartOpenAnalytics) HeartOpenAnalytics.trackResultView(CONCEPT_ID, topType);
     }
 

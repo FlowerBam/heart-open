@@ -7,6 +7,8 @@
   <meta name="description" content="1문제 답변 후 슬롯이 내 ESARP 타입을 뽑아준다 🎰">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
   <link rel="stylesheet" href="../shared/tokens.css">
+  <link rel="stylesheet" href="../_shared/tokens.css">
+  <script src="../_shared/result-esarp.js" defer></script>
   <link rel="stylesheet" href="../shared/result-card.css">
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-2NYTV5FKDC"></script>
   <script>
@@ -16,8 +18,16 @@
     gtag('config', 'G-2NYTV5FKDC');
   </script>
   <script src="../shared/analytics.js" defer></script>
+  <script src="../_shared/haptic.js" defer></script>
+  <script src="../_shared/motion.js" defer></script>
+  <script src="../_shared/ga4-funnel.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
   <script src="../shared/result-card.js" defer></script>
+  <script src="../_shared/local-storage.js" defer></script>
+  <script src="../_shared/share-card-ratio.js" defer></script>
+  <script src="../_shared/share-caption.js" defer></script>
+  <script src="../_shared/revisit-hook.js" defer></script>
+  <script src="../_shared/stage2-engagement.js" defer></script>
   <style>
     .stage { padding-top: var(--space-6); text-align: center; }
     h1 { font-size: 22px; font-weight: 700; }
@@ -85,7 +95,7 @@
     .pop-in { animation: pop-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
   </style>
 </head>
-<body>
+<body data-concept-id="slot-match" data-concept-name="슬롯 매칭" data-revisit-hooks="friend,alt-ending" data-share-hashtags="하트오픈,연애타입,ESARP">
   <div class="container">
     <section id="screen-intro" class="stage">
       <h1>나는 어떤 연애 타입일까? 🎰</h1>
@@ -113,7 +123,7 @@
     </section>
 
     <section id="screen-result" class="stage hidden">
-      <div class="result-card pop-in" id="result-card">
+      <div class="result-card pop-in" id="result-card" role="status" aria-live="polite" aria-atomic="true">
         <img id="result-img" src="" alt="">
         <div class="result-title" id="result-title"></div>
         <div class="result-desc" id="result-desc"></div>
@@ -131,13 +141,14 @@
     const CONCEPT_ID = '01';
     const CONCEPT_NAME = '슬롯 매칭';
 
-    const QUESTION = {
-      text: '다툰 다음 날, 나는?',
-      a: '바로 연락해',
-      b: '상대방 연락 기다려',
-      aType: 'E',
-      bType: 'A'
-    };
+    const QUESTION_POOL = [
+      { text: '다툰 다음 날, 나는?',                a: '바로 연락해',        b: '상대방 연락 기다려', aType: 'E', bType: 'A' },
+      { text: '남친 새 사진 올렸을 때 나는?',        a: '댓글 1등 찍어',      b: '조용히 좋아요만',    aType: 'S', bType: 'A' },
+      { text: '데이트 장소 정할 때 나는?',           a: '핫플 가보자고 해',   b: '늘 가던 곳 좋아',    aType: 'R', bType: 'P' },
+      { text: '주말 갑자기 비었어, 나는?',           a: '친구들 바로 콜',     b: '느긋하게 혼자',      aType: 'S', bType: 'P' },
+      { text: '남친이 갑자기 깜짝 선물, 나는?',      a: '와락 안고 표현 폭발', b: '조용히 오래 간직',   aType: 'E', bType: 'R' },
+    ];
+    const QUESTION = QUESTION_POOL[Math.floor(Math.random() * QUESTION_POOL.length)];
 
     const TYPES = {
       E: { name: '감정', file: 'emotion.png',    desc: '감정을 솔직하게 표현하는 게 나야' },
@@ -211,7 +222,7 @@
       const t = TYPES[type];
       $('result-img').src = '../assets/characters/' + t.file;
       $('result-img').alt = t.name + ' 타입';
-      $('result-title').textContent = t.name + ' 타입이에요!';
+      $('result-title').textContent = t.name + ' 타입이야 💕';
       $('result-desc').textContent = t.desc;
       showOnly('screen-result');
       if (window.HeartOpenAnalytics) HeartOpenAnalytics.trackResultView(CONCEPT_ID, type);

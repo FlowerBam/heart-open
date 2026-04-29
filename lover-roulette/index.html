@@ -7,6 +7,8 @@
   <meta name="description" content="오늘 내 연인 타입을 룰렛으로 뽑아봐 🎰">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
   <link rel="stylesheet" href="../shared/tokens.css">
+  <link rel="stylesheet" href="../_shared/tokens.css">
+  <script src="../_shared/result-esarp.js" defer></script>
   <link rel="stylesheet" href="../shared/result-card.css">
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-2NYTV5FKDC"></script>
   <script>
@@ -16,8 +18,16 @@
     gtag('config', 'G-2NYTV5FKDC');
   </script>
   <script src="../shared/analytics.js" defer></script>
+  <script src="../_shared/haptic.js" defer></script>
+  <script src="../_shared/motion.js" defer></script>
+  <script src="../_shared/ga4-funnel.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
   <script src="../shared/result-card.js" defer></script>
+  <script src="../_shared/local-storage.js" defer></script>
+  <script src="../_shared/share-card-ratio.js" defer></script>
+  <script src="../_shared/share-caption.js" defer></script>
+  <script src="../_shared/revisit-hook.js" defer></script>
+  <script src="../_shared/stage2-engagement.js" defer></script>
   <style>
     .stage { padding-top: var(--space-6); text-align: center; }
     h1 { font-size: 22px; font-weight: 700; }
@@ -65,6 +75,18 @@
       color: var(--text-secondary);
       opacity: 0.7;
     }
+    .badge-sim {
+      display: inline-block;
+      padding: 2px 8px;
+      margin-right: 6px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: var(--primary-dark);
+      background: var(--accent-surface);
+      border-radius: var(--radius-pill);
+      vertical-align: middle;
+    }
 
     .hidden { display: none !important; }
 
@@ -72,7 +94,7 @@
     .pop-in { animation: pop-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
   </style>
 </head>
-<body>
+<body data-concept-id="lover-roulette" data-concept-name="연인 룰렛" data-revisit-hooks="tomorrow,partner" data-share-hashtags="하트오픈룰렛,오늘의연인타입">
   <div class="container">
     <section id="screen-roulette" class="stage">
       <h1>오늘의 연인 룰렛 🎰</h1>
@@ -86,12 +108,11 @@
     </section>
 
     <section id="screen-result" class="stage hidden">
-      <div class="result-card pop-in" id="result-card">
+      <div class="result-card pop-in" id="result-card" role="status" aria-live="polite" aria-atomic="true">
         <img id="result-img" src="" alt="">
         <div class="result-title" id="result-title"></div>
         <div class="result-desc" id="result-desc"></div>
-        <div class="stat-line" id="stat-line"></div>
-        <div class="stat-note">* 통계는 GA4 집계 전 시뮬레이션 값이에요</div>
+        <div class="stat-line" id="stat-line"><span class="badge-sim">시뮬레이션</span> 비슷한 타입 사람들도 있어</div>
         <div class="result-actions">
           <button class="btn-share" id="btn-share">공유</button>
           <button class="btn-save" id="btn-save">저장</button>
@@ -106,14 +127,56 @@
     const CONCEPT_ID = '10';
     const CONCEPT_NAME = '오늘의 연인 룰렛';
 
+    // 메시지 풀 ESARP×5 = 25개 (Stage 2 Must, evolution/10)
+    const MSG_POOL = {
+      E: [
+        '오늘은 감정에 솔직한 하루 💕',
+        '먼저 표현해봐, 마음이 닿아 💕',
+        '솔직한 한 마디가 통하는 날',
+        '감정 그대로 흘려봐, 괜찮아',
+        '오늘은 마음 그릇이 넓어지는 날',
+      ],
+      S: [
+        '오늘은 주변을 밝혀주는 날 ✨',
+        '함께면 더 빛나는 하루 ✨',
+        '활기 가득, 신나게 보내봐',
+        '에너지 넘치는 자리에 들러봐',
+        '오늘은 분위기 메이커 모드',
+      ],
+      A: [
+        '오늘은 안정을 원하는 날 🌙',
+        '편안하게 있어, 그게 정답',
+        '느긋한 하루로 충전해봐',
+        '익숙한 자리가 가장 따뜻해',
+        '오늘은 신뢰가 깊어지는 날',
+      ],
+      R: [
+        '오늘은 낭만 가득한 날 🌸',
+        '설렘이 살짝 차오르는 하루',
+        '작은 깜짝, 큰 설렘',
+        '오늘은 예쁜 순간 남겨봐',
+        '낭만 한 스푼, 기분 좋게',
+      ],
+      P: [
+        '오늘은 차분한 현실 모드 🌱',
+        '계획 세우기 딱 좋은 하루',
+        '단단하게 한 걸음 내디뎌봐',
+        '필요한 것부터, 천천히',
+        '오늘은 정리가 자산이 되는 날',
+      ],
+    };
+    function pickMsg(type) {
+      const pool = MSG_POOL[type] || [];
+      return pool[Math.floor(Math.random() * pool.length)] || '';
+    }
     const SECTORS = [
-      { type: 'E', color: '#FF6F91', label: '감정형', img: 'emotion.png',    msg: '오늘은 감정에 솔직한 하루! 남친한테 먼저 표현해봐 💕' },
-      { type: 'S', color: '#FFB347', label: '사교형', img: 'social.png',     msg: '오늘은 주변을 밝혀주는 타입! 신나게 보내봐 🎉' },
-      { type: 'A', color: '#C3B1E1', label: '애착형', img: 'attachment.png', msg: '오늘은 안정을 원하는 날! 편안하게 있어봐 🌙' },
-      { type: 'R', color: '#FF9EC4', label: '낭만형', img: 'romantic.png',   msg: '오늘은 낭만적인 날! 설레는 뭔가 해봐 🌸' },
-      { type: 'P', color: '#82C09A', label: '현실형', img: 'practical.png',  msg: '오늘은 현실적인 날! 차분히 계획 세워봐 📋' }
+      { type: 'E', color: '#FF6F91', label: '감정형', img: 'emotion.png' },
+      { type: 'S', color: '#FFB347', label: '사교형', img: 'social.png' },
+      { type: 'A', color: '#C3B1E1', label: '애착형', img: 'attachment.png' },
+      { type: 'R', color: '#FF9EC4', label: '낭만형', img: 'romantic.png' },
+      { type: 'P', color: '#82C09A', label: '현실형', img: 'practical.png' }
     ];
-    const STATS = { E: 28, S: 22, A: 25, R: 15, P: 10 };
+    // 가짜 통계 제거 (evolution/10_lover_roulette_evo.md Must) — GA4 누적 전까지 비율 미표시
     const SPIN_LIMIT = 3;
     const TODAY_KEY = 'heartopen.roulette.' + new Date().toISOString().slice(0, 10);
 
@@ -177,9 +240,20 @@
     function showResult(sector) {
       $('result-img').src = '../assets/characters/' + sector.img;
       $('result-img').alt = sector.label;
-      $('result-title').textContent = '오늘은 ' + sector.label + '!';
-      $('result-desc').textContent = sector.msg;
-      $('stat-line').textContent = '오늘 ' + STATS[sector.type] + '%가 같은 타입이래';
+      $('result-title').textContent = '오늘은 ' + sector.label;
+      let msg = pickMsg(sector.type);
+      // 같은 타입 연속 3회 메타 메시지 (Should, evolution/10)
+      try {
+        if (window.HeartOpenLS) {
+          const k = HeartOpenLS.lsKey('10', 'results');
+          const arr = HeartOpenLS.lsAppend(k, { type: sector.type, ts: Date.now() }, { cap: 30 });
+          const last3 = arr.slice(-3).map(function (x) { return x.type; });
+          if (last3.length === 3 && last3.every(function (t) { return t === sector.type; })) {
+            msg += ' · 최근 너는 진짜 ' + sector.label;
+          }
+        }
+      } catch (_) {}
+      $('result-desc').textContent = msg;
       ['screen-roulette','screen-result'].forEach(s => $(s).classList.toggle('hidden', s !== 'screen-result'));
       if (window.HeartOpenAnalytics) HeartOpenAnalytics.trackResultView(CONCEPT_ID, sector.type);
     }

@@ -7,6 +7,8 @@
   <meta name="description" content="내 선택이 어떤 결말을 만들지 시뮬해봐 🌱">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
   <link rel="stylesheet" href="../shared/tokens.css">
+  <link rel="stylesheet" href="../_shared/tokens.css">
+  <script src="../_shared/result-esarp.js" defer></script>
   <link rel="stylesheet" href="../shared/result-card.css">
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-2NYTV5FKDC"></script>
   <script>
@@ -16,8 +18,16 @@
     gtag('config', 'G-2NYTV5FKDC');
   </script>
   <script src="../shared/analytics.js" defer></script>
+  <script src="../_shared/haptic.js" defer></script>
+  <script src="../_shared/motion.js" defer></script>
+  <script src="../_shared/ga4-funnel.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
   <script src="../shared/result-card.js" defer></script>
+  <script src="../_shared/local-storage.js" defer></script>
+  <script src="../_shared/share-card-ratio.js" defer></script>
+  <script src="../_shared/share-caption.js" defer></script>
+  <script src="../_shared/revisit-hook.js" defer></script>
+  <script src="../_shared/stage2-engagement.js" defer></script>
   <style>
     .stage { padding-top: var(--space-6); text-align: center; }
     h1 { font-size: 22px; font-weight: 700; line-height: 1.4; }
@@ -71,7 +81,7 @@
     .hidden { display: none !important; }
   </style>
 </head>
-<body>
+<body data-concept-id="conflict-branch" data-concept-name="갈등 분기" data-revisit-hooks="alt-ending,friend" data-share-hashtags="하트오픈갈등시뮬,커플갈등해결">
   <div class="container">
     <section id="screen-intro" class="stage">
       <h1>갈등 분기 시뮬 🌱</h1>
@@ -88,7 +98,7 @@
     </section>
 
     <section id="screen-result" class="stage hidden">
-      <div class="result-card" id="result-card">
+      <div class="result-card" id="result-card" role="status" aria-live="polite" aria-atomic="true">
         <img id="result-img" src="" alt="">
         <div class="result-title" id="result-title"></div>
         <div class="result-desc" id="result-desc"></div>
@@ -99,8 +109,8 @@
         </div>
         <a class="btn-cta" id="btn-cta" href="https://heartopen.app">앱에서 더 깊은 가이드 →</a>
       </div>
-      <button class="cta-restart" id="btn-retry" style="background:transparent;color:var(--primary-dark);box-shadow:none;text-decoration:underline;">다른 결말 찾아보기</button>
-      <button class="cta-restart" id="btn-back" style="background:transparent;color:var(--text-secondary);box-shadow:none;">시나리오 다시 고르기</button>
+      <button class="cta-restart" id="btn-retry" style="background:transparent;color:var(--primary-dark);box-shadow:none;text-decoration:underline;">다른 결말 보기</button>
+      <button class="cta-restart" id="btn-back" style="background:transparent;color:var(--text-secondary);box-shadow:none;">시나리오 바꾸기</button>
     </section>
   </div>
 

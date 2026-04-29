@@ -7,6 +7,8 @@
   <meta name="description" content="5초 안에 3문제 — 남친이랑 얼마나 통할까?">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
   <link rel="stylesheet" href="../shared/tokens.css">
+  <link rel="stylesheet" href="../_shared/tokens.css">
+  <script src="../_shared/result-esarp.js" defer></script>
   <link rel="stylesheet" href="../shared/result-card.css">
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-2NYTV5FKDC"></script>
   <script>
@@ -16,8 +18,16 @@
     gtag('config', 'G-2NYTV5FKDC');
   </script>
   <script src="../shared/analytics.js" defer></script>
+  <script src="../_shared/haptic.js" defer></script>
+  <script src="../_shared/motion.js" defer></script>
+  <script src="../_shared/ga4-funnel.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
   <script src="../shared/result-card.js" defer></script>
+  <script src="../_shared/local-storage.js" defer></script>
+  <script src="../_shared/share-card-ratio.js" defer></script>
+  <script src="../_shared/share-caption.js" defer></script>
+  <script src="../_shared/revisit-hook.js" defer></script>
+  <script src="../_shared/stage2-engagement.js" defer></script>
   <style>
     .stage { padding-top: var(--space-6); text-align: center; }
     h1 { font-size: 22px; font-weight: 700; }
@@ -93,7 +103,7 @@
     .pop-in { animation: pop-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
   </style>
 </head>
-<body>
+<body data-concept-id="sync-answer" data-concept-name="동시답변" data-revisit-hooks="partner,friend" data-share-hashtags="하트오픈동시답변,텔레파시">
   <div class="container">
     <section id="screen-intro" class="stage">
       <h1>동시 답변 ✨</h1>
@@ -135,7 +145,7 @@
     </section>
 
     <section id="screen-result" class="stage hidden">
-      <div class="result-card pop-in" id="result-card">
+      <div class="result-card pop-in" id="result-card" role="status" aria-live="polite" aria-atomic="true">
         <div class="sync-num" id="sync-num"></div>
         <div style="font-size:14px; color:var(--text-secondary); margin-top:-8px;">남친이랑 통한 정도</div>
         <img id="result-img" src="" alt="">
@@ -265,20 +275,26 @@
       else setTimeout(renderRound, 300);
     }
 
-    function showResult() {
-      let matches = 0;
-      for (let i = 0; i < QUESTIONS.length; i++) {
-        if (myAnswers[i] === bfPredictions[i]) matches++;
-      }
-      const syncRate = Math.round(matches / QUESTIONS.length * 100);
+    // ESARP 응답 비교 기반 결정론적 계산 (evolution/03_sync_answer_evo.md Must)
+    function calcConsistency(types) {
+      const freq = types.reduce((a, t) => (a[t] = (a[t] || 0) + 1, a), {});
+      const max = Math.max(...Object.values(freq));
+      return Math.round((max / types.length) * 100);
+    }
 
-      const counts = {};
-      myAnswers.forEach((ans, i) => {
-        const t = ans === 'a' ? QUESTIONS[i].ta : QUESTIONS[i].tb;
-        counts[t] = (counts[t] || 0) + 1;
-      });
+    function showResult() {
+      const myTypes = myAnswers.map((ans, i) => ans === 'a' ? QUESTIONS[i].ta : QUESTIONS[i].tb);
+      const bfTypes = bfPredictions.map((ans, i) => ans === 'a' ? QUESTIONS[i].ta : QUESTIONS[i].tb);
+      const agree = myTypes.reduce((n, t, i) => n + (t === bfTypes[i] ? 1 : 0), 0);
+      const coupleMatch = Math.round((agree / myTypes.length) * 100);
+      const consistency = calcConsistency(myTypes);
+      const syncRate = coupleMatch;
+
+      const counts = myTypes.reduce((a, t) => (a[t] = (a[t] || 0) + 1, a), {});
       let topType = 'E', topCount = -1;
       Object.entries(counts).forEach(([t, c]) => { if (c > topCount) { topCount = c; topType = t; } });
+
+      gtag('event', 'sync_calc', { concept_id: CONCEPT_ID, mode: 'solo', rate: syncRate, consistency });
 
       const t = TYPES[topType];
       $('sync-num').textContent = syncRate + '%';

@@ -7,6 +7,8 @@
   <meta name="description" content="5초 안에 직감으로만 답하는 초간단 연애 퀴즈">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
   <link rel="stylesheet" href="../shared/tokens.css">
+  <link rel="stylesheet" href="../_shared/tokens.css">
+  <script src="../_shared/result-esarp.js" defer></script>
   <link rel="stylesheet" href="../shared/result-card.css">
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-2NYTV5FKDC"></script>
   <script>
@@ -16,8 +18,16 @@
     gtag('config', 'G-2NYTV5FKDC');
   </script>
   <script src="../shared/analytics.js" defer></script>
+  <script src="../_shared/haptic.js" defer></script>
+  <script src="../_shared/motion.js" defer></script>
+  <script src="../_shared/ga4-funnel.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
   <script src="../shared/result-card.js" defer></script>
+  <script src="../_shared/local-storage.js" defer></script>
+  <script src="../_shared/share-card-ratio.js" defer></script>
+  <script src="../_shared/share-caption.js" defer></script>
+  <script src="../_shared/revisit-hook.js" defer></script>
+  <script src="../_shared/stage2-engagement.js" defer></script>
   <style>
     .stage { padding-top: var(--space-6); text-align: center; }
     h1 { font-size: 24px; font-weight: 800; }
@@ -78,7 +88,7 @@
     .pop-in { animation: pop-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
   </style>
 </head>
-<body>
+<body data-concept-id="gut-5sec" data-concept-name="5초 직감" data-revisit-hooks="friend,alt-ending" data-share-hashtags="하트오픈직감,5초테스트">
   <div class="container">
     <section id="screen-intro" class="stage">
       <h1>⚡ 직감 5초</h1>
@@ -88,7 +98,7 @@
 
     <section id="screen-ready" class="stage hidden">
       <p class="lead">준비...</p>
-      <div class="countdown-num" id="ready-num">3</div>
+      <div class="countdown-num" id="ready-num" role="timer" aria-live="assertive" aria-atomic="true" aria-label="시작 카운트다운">3</div>
     </section>
 
     <section id="screen-quiz" class="stage hidden">
@@ -97,7 +107,7 @@
           <circle class="bg" cx="50" cy="50" r="45"></circle>
           <circle class="fg" id="timer-fg" cx="50" cy="50" r="45"></circle>
         </svg>
-        <div class="timer-num" id="timer-num">5</div>
+        <div class="timer-num" id="timer-num" role="timer" aria-live="assertive" aria-atomic="true" aria-label="남은 시간 (초)">5</div>
       </div>
       <div class="q-text" id="q-text"></div>
       <div class="choices">
@@ -107,7 +117,7 @@
     </section>
 
     <section id="screen-result" class="stage hidden">
-      <div class="result-card pop-in" id="result-card">
+      <div class="result-card pop-in" id="result-card" role="status" aria-live="polite" aria-atomic="true">
         <img id="result-img" src="" alt="">
         <div class="result-title" id="result-title"></div>
         <div class="result-desc" id="result-desc"></div>
@@ -193,7 +203,10 @@
       timerInterval = setInterval(() => {
         timeLeft--;
         $('timer-num').textContent = Math.max(0, timeLeft);
-        if (timeLeft <= 2) $('timer-svg').classList.add('hot');
+        if (timeLeft <= 2) {
+          $('timer-svg').classList.add('hot');
+          if (window.HeartOpenHaptic) HeartOpenHaptic.light();
+        }
       }, 1000);
       timeoutId = setTimeout(() => {
         if (!answered) handleChoice(null);
@@ -217,7 +230,9 @@
       } else {
         type = choice === 'a' ? currentQ.ta : currentQ.tb;
         gtag('event', 'gut_answer', { concept_id: CONCEPT_ID, choice, time_remaining: remaining });
+        if (window.HeartOpenHaptic) HeartOpenHaptic.success();
       }
+      if (window.HeartOpenAnalytics) HeartOpenAnalytics.trackStep(CONCEPT_ID, choice === null ? 'timeout' : 'gut_answer');
       showResult(type, choice === null);
     }
 
@@ -228,6 +243,7 @@
       $('result-title').textContent = '직감은 ' + t.name + ' 타입 ✨';
       $('result-desc').textContent = timedOut ? '직감이 없었나봐 😄 다시 해볼래?' : t.desc;
       showOnly('screen-result');
+      if (window.HeartOpenHaptic) HeartOpenHaptic.reveal();
       if (window.HeartOpenAnalytics) HeartOpenAnalytics.trackResultView(CONCEPT_ID, type);
     }
 

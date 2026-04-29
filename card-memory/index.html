@@ -7,6 +7,8 @@
   <meta name="description" content="3×3 카드 뒤집기 — 우리는 몇 초 커플?">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
   <link rel="stylesheet" href="../shared/tokens.css">
+  <link rel="stylesheet" href="../_shared/tokens.css">
+  <script src="../_shared/result-esarp.js" defer></script>
   <link rel="stylesheet" href="../shared/result-card.css">
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-2NYTV5FKDC"></script>
   <script>
@@ -16,8 +18,16 @@
     gtag('config', 'G-2NYTV5FKDC');
   </script>
   <script src="../shared/analytics.js" defer></script>
+  <script src="../_shared/haptic.js" defer></script>
+  <script src="../_shared/motion.js" defer></script>
+  <script src="../_shared/ga4-funnel.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
   <script src="../shared/result-card.js" defer></script>
+  <script src="../_shared/local-storage.js" defer></script>
+  <script src="../_shared/share-card-ratio.js" defer></script>
+  <script src="../_shared/share-caption.js" defer></script>
+  <script src="../_shared/revisit-hook.js" defer></script>
+  <script src="../_shared/stage2-engagement.js" defer></script>
   <style>
     .stage { padding-top: var(--space-6); text-align: center; }
     h1 { font-size: 22px; font-weight: 700; }
@@ -94,7 +104,7 @@
     .pop-in { animation: pop-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
   </style>
 </head>
-<body>
+<body data-concept-id="card-memory" data-concept-name="카드 메모리" data-revisit-hooks="friend,alt-ending" data-share-hashtags="하트오픈카드,찰떡커플">
   <div class="container">
     <section id="screen-intro" class="stage">
       <h1>🃏 카드 메모리</h1>
@@ -108,7 +118,7 @@
     </section>
 
     <section id="screen-result" class="stage hidden">
-      <div class="result-card pop-in" id="result-card">
+      <div class="result-card pop-in" id="result-card" role="status" aria-live="polite" aria-atomic="true">
         <img id="result-img" src="" alt="">
         <div class="result-title" id="result-title"></div>
         <div class="result-desc" id="result-desc"></div>
@@ -266,18 +276,59 @@
       }
     }
 
+    // 결과 분기 6종 (Stage 2 Must, evolution/02): 시간 × 매칭 ESARP 페어 + 보너스 변형
+    function pickResultBranch(timeMs, matchedTypes, bonusFirst) {
+      const fast = timeMs < 15000;
+      const mid  = timeMs >= 15000 && timeMs < 30000;
+      const dominant = (function () {
+        const freq = {};
+        matchedTypes.forEach(function (t) { freq[t] = (freq[t] || 0) + 1; });
+        return Object.entries(freq).sort(function (a, b) { return b[1] - a[1]; })[0] || ['E', 0];
+      })();
+      const top = dominant[0];
+      if (bonusFirst) return { title: '운빨 커플 🍀', file: 'romantic.png', emoji: '🍀' };
+      if (fast && top === 'E') return { title: '감정형 초고속 커플 💕', file: 'emotion.png',    emoji: '💕' };
+      if (fast && top === 'S') return { title: '사교형 초고속 커플 ✨', file: 'social.png',     emoji: '✨' };
+      if (mid  && top === 'A') return { title: '안정 찰떡 커플 🌙',     file: 'attachment.png', emoji: '🌙' };
+      if (mid  && top === 'R') return { title: '낭만 찰떡 커플 🌸',     file: 'romantic.png',   emoji: '🌸' };
+      if (top === 'P')         return { title: '여유 현실 커플 🌱',     file: 'practical.png',  emoji: '🌱' };
+      return { title: '찰떡 커플 💕', file: 'attachment.png', emoji: '💕' };
+    }
+
     function showResult(timeMs) {
-      let title, file;
-      if (timeMs < 15000) { title = '천재 커플'; file = 'emotion.png'; }
-      else if (timeMs < 30000) { title = '찰떡 커플'; file = 'attachment.png'; }
-      else { title = '여유로운 커플'; file = 'social.png'; }
+      const matchedTypes = [...matched]
+        .filter(function (idx) { return cards[idx] && cards[idx] !== 'BONUS'; })
+        .map(function (idx) { return cards[idx]; });
+      const branch = pickResultBranch(timeMs, matchedTypes, bonusFound && matched.size <= 4);
       const sec = (timeMs / 1000).toFixed(1);
-      $('result-img').src = '../assets/characters/' + file;
-      $('result-img').alt = title;
-      $('result-title').textContent = title + ' 💕';
-      $('result-desc').textContent = sec + '초만에 짝을 다 맞췄어! 남친이랑 같이 해봐.';
+      $('result-img').src = '../assets/characters/' + branch.file;
+      $('result-img').alt = branch.title;
+      $('result-title').textContent = branch.title;
+
+      // localStorage bestTime + plays (Stage 2, evolution/02)
+      let trendNote = '';
+      try {
+        if (window.HeartOpenLS) {
+          const bestKey = HeartOpenLS.lsKey('02', 'bestTime');
+          const playsKey = HeartOpenLS.lsKey('02', 'plays');
+          const prevBest = HeartOpenLS.lsGet(bestKey, null);
+          const plays = HeartOpenLS.lsBump(playsKey);
+          if (typeof prevBest === 'number' && prevBest > 0) {
+            if (timeMs < prevBest) {
+              trendNote = ' · 신기록 ' + sec + '초!';
+              HeartOpenLS.lsSet(bestKey, timeMs);
+            } else {
+              trendNote = ' · 최단 ' + (prevBest / 1000).toFixed(1) + '초 — 깨봐';
+            }
+          } else {
+            HeartOpenLS.lsSet(bestKey, timeMs);
+          }
+          if (plays >= 5) trendNote += ' · 단골 커플 인증';
+        }
+      } catch (_) {}
+      $('result-desc').textContent = sec + '초만에 짝을 다 맞췄어' + trendNote;
       showOnly('screen-result');
-      if (window.HeartOpenAnalytics) HeartOpenAnalytics.trackResultView(CONCEPT_ID, title);
+      if (window.HeartOpenAnalytics) HeartOpenAnalytics.trackResultView(CONCEPT_ID, branch.title);
     }
 
     $('btn-share').addEventListener('click', () => {

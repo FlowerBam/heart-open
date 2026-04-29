@@ -7,6 +7,8 @@
   <meta name="description" content="매일 한 문제 풀고 ESARP 보석 모으기 💎">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
   <link rel="stylesheet" href="../shared/tokens.css">
+  <link rel="stylesheet" href="../_shared/tokens.css">
+  <script src="../_shared/result-esarp.js" defer></script>
   <link rel="stylesheet" href="../shared/result-card.css">
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-2NYTV5FKDC"></script>
   <script>
@@ -16,8 +18,16 @@
     gtag('config', 'G-2NYTV5FKDC');
   </script>
   <script src="../shared/analytics.js" defer></script>
+  <script src="../_shared/haptic.js" defer></script>
+  <script src="../_shared/motion.js" defer></script>
+  <script src="../_shared/ga4-funnel.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
   <script src="../shared/result-card.js" defer></script>
+  <script src="../_shared/local-storage.js" defer></script>
+  <script src="../_shared/share-card-ratio.js" defer></script>
+  <script src="../_shared/share-caption.js" defer></script>
+  <script src="../_shared/revisit-hook.js" defer></script>
+  <script src="../_shared/stage2-engagement.js" defer></script>
   <style>
     .stage { padding-top: var(--space-6); text-align: center; }
     h1 { font-size: 22px; font-weight: 700; line-height: 1.4; }
@@ -107,7 +117,7 @@
     .hidden { display: none !important; }
   </style>
 </head>
-<body>
+<body data-concept-id="gem-daily" data-concept-name="오늘의 보석" data-revisit-hooks="tomorrow,collection" data-share-hashtags="하트오픈보석,오늘의타입">
   <div class="container">
     <!-- INTRO / TODAY -->
     <section id="screen-intro" class="stage">
@@ -148,7 +158,7 @@
 
     <!-- RESULT -->
     <section id="screen-result" class="stage hidden">
-      <div class="result-card" id="result-card">
+      <div class="result-card" id="result-card" role="status" aria-live="polite" aria-atomic="true">
         <img id="result-img" src="" alt="">
         <div class="result-title" id="result-title"></div>
         <div class="result-desc" id="result-desc"></div>
@@ -261,10 +271,19 @@
     function reveal(type) {
       const state = load();
       state[type] = (state[type] || 0) + 1;
-      state.lastDate = todayStr();
+      // streak 계산 (Stage 2 Must, evolution/04)
+      const today = todayStr();
+      const last = state.lastDate || null;
+      const yesterday = (function () {
+        const d = new Date(); d.setDate(d.getDate() - 1);
+        return d.toISOString().split('T')[0];
+      })();
+      if (last === yesterday) state.streak = (state.streak || 0) + 1;
+      else if (last !== today) state.streak = 1;
+      state.lastDate = today;
       state.lastType = type;
       save(state);
-      gtag('event', 'gem_earned', { concept_id: CONCEPT_ID, gem_type: type });
+      gtag('event', 'gem_earned', { concept_id: CONCEPT_ID, gem_type: type, streak: state.streak });
       renderResult(type);
       renderProgress('progress-grid-3');
       showOnly('screen-result');
@@ -274,10 +293,17 @@
 
     function renderResult(type) {
       const g = GEMS[type];
+      const state = load();
+      const streak = state.streak || 1;
+      const collected = ORDER.filter(function (t) { return (state[t] || 0) > 0; }).length;
       $('result-img').src = '../assets/characters/' + g.char;
       $('result-img').alt = g.name;
-      $('result-title').textContent = '오늘은 ' + g.name + ' ' + g.emoji;
-      $('result-desc').textContent = g.desc;
+      let title = '오늘은 ' + g.name + ' ' + g.emoji;
+      if (collected >= 5) title = '5종 다 모았어 💎 ' + g.emoji;
+      $('result-title').textContent = title;
+      let desc = g.desc + ' · D+' + streak + ' 함께 모으는 중';
+      if (collected < 5) desc += ' · ' + (5 - collected) + '개 남았어';
+      $('result-desc').textContent = desc;
     }
 
     $('btn-share').addEventListener('click', () => {

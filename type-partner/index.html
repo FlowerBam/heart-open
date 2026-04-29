@@ -7,6 +7,8 @@
   <meta name="description" content="3가지 상황으로 나에게 어울리는 짝꿍 타입을 찾아봐 🔍">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
   <link rel="stylesheet" href="../shared/tokens.css">
+  <link rel="stylesheet" href="../_shared/tokens.css">
+  <script src="../_shared/result-esarp.js" defer></script>
   <link rel="stylesheet" href="../shared/result-card.css">
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-2NYTV5FKDC"></script>
   <script>
@@ -16,8 +18,16 @@
     gtag('config', 'G-2NYTV5FKDC');
   </script>
   <script src="../shared/analytics.js" defer></script>
+  <script src="../_shared/haptic.js" defer></script>
+  <script src="../_shared/motion.js" defer></script>
+  <script src="../_shared/ga4-funnel.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
   <script src="../shared/result-card.js" defer></script>
+  <script src="../_shared/local-storage.js" defer></script>
+  <script src="../_shared/share-card-ratio.js" defer></script>
+  <script src="../_shared/share-caption.js" defer></script>
+  <script src="../_shared/revisit-hook.js" defer></script>
+  <script src="../_shared/stage2-engagement.js" defer></script>
   <style>
     .stage { padding-top: var(--space-6); text-align: center; }
     h1 { font-size: 22px; font-weight: 700; }
@@ -72,7 +82,7 @@
     .pop-in { animation: pop-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
   </style>
 </head>
-<body>
+<body data-concept-id="type-partner" data-concept-name="짝꿍 유형" data-revisit-hooks="partner,friend" data-share-hashtags="하트오픈짝꿍,연애짝꿍타입">
   <div class="container">
     <section id="screen-intro" class="stage">
       <h1>나의 짝꿍 유형 🔍</h1>
@@ -90,7 +100,7 @@
     </section>
 
     <section id="screen-result" class="stage hidden">
-      <div class="result-card pop-in" id="result-card">
+      <div class="result-card pop-in" id="result-card" role="status" aria-live="polite" aria-atomic="true">
         <img id="result-img" src="" alt="">
         <div class="result-title" id="result-title"></div>
         <div class="result-desc" id="result-desc"></div>
@@ -132,13 +142,21 @@
       ]}
     ];
 
+    // 1순위 + 2순위 짝꿍 페어 (Stage 2 Must, evolution/14)
+    const PARTNER_PAIRS = {
+      E: { primary: 'A', secondary: 'R', why: { A: '표현 받아주는 안정', R: '낭만 함께 공유' } },
+      S: { primary: 'R', secondary: 'P', why: { R: '설렘 만드는 낭만',   P: '안정 잡아주는 현실' } },
+      A: { primary: 'P', secondary: 'E', why: { P: '믿음직한 현실파',     E: '솔직한 표현' } },
+      R: { primary: 'E', secondary: 'S', why: { E: '감정 공감',           S: '활기 더해줌' } },
+      P: { primary: 'S', secondary: 'A', why: { S: '유연한 사교',         A: '안정적 동반' } },
+    };
     const PARTNER_MAP = { E: 'A', S: 'R', A: 'P', P: 'S', R: 'E' };
     const PARTNER_DESC = {
-      E: { name: '감정형 짝꿍', file: 'emotion.png',    desc: '낭만적인 너에게는 감정에 솔직한 짝꿍이 잘 맞아. 너의 마음을 깊이 공감해줄 거야 💕' },
-      S: { name: '사교형 짝꿍', file: 'social.png',     desc: '계획적인 너에게는 활기차고 유연한 짝꿍이 어울려. 일상에 웃음을 더해줄 사람이야 ✨' },
-      A: { name: '애착형 짝꿍', file: 'attachment.png', desc: '감정 표현이 풍부한 너에게는 안정적이고 받아주는 짝꿍이 필요해. 깊이 안아줄 사람 🌙' },
-      R: { name: '낭만형 짝꿍', file: 'romantic.png',   desc: '에너지 넘치는 너에게는 설레게 해줄 낭만 짝꿍이 어울려. 매일이 특별해질 거야 🌸' },
-      P: { name: '현실형 짝꿍', file: 'practical.png',  desc: '안정 지향인 너에게는 든든한 현실형 짝꿍이 잘 맞아. 함께라면 흔들림 없는 사랑 🌱' }
+      E: { name: '감정형 짝꿍', file: 'emotion.png',    desc: '감정에 솔직한 짝꿍이야. 마음을 깊이 공감해줄 거야 💕' },
+      S: { name: '사교형 짝꿍', file: 'social.png',     desc: '활기차고 유연한 짝꿍이야. 일상에 웃음을 더해줄 사람이야 ✨' },
+      A: { name: '애착형 짝꿍', file: 'attachment.png', desc: '안정적이고 받아주는 짝꿍이야. 깊이 안아줄 사람 🌙' },
+      R: { name: '낭만형 짝꿍', file: 'romantic.png',   desc: '설레게 해줄 낭만 짝꿍이야. 매일이 특별해질 거야 🌸' },
+      P: { name: '현실형 짝꿍', file: 'practical.png',  desc: '든든한 현실형 짝꿍이야. 함께라면 흔들림 없는 사랑 🌱' }
     };
 
     const $ = (id) => document.getElementById(id);
@@ -178,13 +196,27 @@
       $('progress-fill').style.width = '100%';
       const freq = choiceTypes.reduce((acc, t) => { acc[t] = (acc[t] || 0) + 1; return acc; }, {});
       const mainNeed = Object.entries(freq).sort((a,b) => b[1]-a[1])[0][0];
-      const partnerType = PARTNER_MAP[mainNeed];
+      const pair = PARTNER_PAIRS[mainNeed] || { primary: PARTNER_MAP[mainNeed], secondary: null, why: {} };
+      const partnerType = pair.primary;
       const p = PARTNER_DESC[partnerType];
+      const sec = pair.secondary && PARTNER_DESC[pair.secondary];
       $('result-img').src = '../assets/characters/' + p.file;
       $('result-img').alt = p.name;
-      $('result-title').textContent = '나의 짝꿍은 ' + p.name + '!';
-      $('result-desc').textContent = p.desc;
-      gtag('event', 'partner_revealed', { concept_id: CONCEPT_ID, partner_type: partnerType });
+      $('result-title').textContent = '나의 짝꿍은 ' + p.name;
+      const whyMain = pair.why && pair.why[partnerType];
+      let desc = (whyMain ? whyMain + '. ' : '') + p.desc;
+      if (sec) {
+        const whySec = pair.why && pair.why[pair.secondary];
+        desc += ' · 2순위 ' + sec.name + (whySec ? '(' + whySec + ')' : '');
+      }
+      $('result-desc').textContent = desc;
+      // localStorage my_type 자동 인식 (Should, evolution/14)
+      try {
+        if (window.HeartOpenLS) {
+          HeartOpenLS.lsSet(HeartOpenLS.lsKey('14', 'my_type'), { type: mainNeed, partner: partnerType, ts: Date.now() });
+        }
+      } catch (_) {}
+      gtag('event', 'partner_revealed', { concept_id: CONCEPT_ID, my_type: mainNeed, partner_type: partnerType, secondary: pair.secondary || null });
       if (window.HeartOpenAnalytics) HeartOpenAnalytics.trackResultView(CONCEPT_ID, partnerType);
       showOnly('screen-result');
     }
