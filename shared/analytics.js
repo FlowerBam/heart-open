@@ -74,6 +74,23 @@
     else send('retry', { concept_id: conceptId, attempt: attempt || 1 });
   }
 
+  const STORE_IOS     = 'https://apps.apple.com/kr/app/%ED%95%98%ED%8A%B8%EC%98%A4%ED%94%88-%EC%BB%A4%ED%94%8C-%EA%B6%81%ED%95%A9-mbti-%EC%97%B0%EC%95%A0%ED%85%8C%EC%8A%A4%ED%8A%B8/id6762368731';
+  const STORE_ANDROID = 'https://play.google.com/store/apps/details?id=com.heartopen';
+
+  function getStoreUrl() {
+    const ua = navigator.userAgent;
+    if (/Android/i.test(ua)) return STORE_ANDROID;
+    return STORE_IOS; // iOS + desktop → App Store
+  }
+
+  // DOMContentLoaded 후 모든 .btn-cta의 href를 스토어 링크로 교체
+  document.addEventListener('DOMContentLoaded', function () {
+    const url = getStoreUrl();
+    document.querySelectorAll('a.btn-cta, .btn-cta[href]').forEach(function (el) {
+      el.href = url;
+    });
+  });
+
   global.HeartOpenAnalytics = {
     trackPageView,
     trackGameStart,
@@ -82,5 +99,6 @@
     trackShare,
     trackCtaClick,
     trackRetry,
+    getStoreUrl,
   };
 })(window);
